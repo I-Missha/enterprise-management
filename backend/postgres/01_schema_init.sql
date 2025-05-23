@@ -1,39 +1,39 @@
 CREATE TABLE "testing_laboratory" (
-    "id" integer PRIMARY KEY,
+    "id" SERIAL PRIMARY KEY,
     "name" varchar(255) NOT NULL
 );
 
 CREATE TABLE "production_halls" (
-   "id" integer PRIMARY KEY,
+   "id" SERIAL PRIMARY KEY,
    "name" varchar(255) NOT NULL
 );
 
 CREATE TABLE "production_area" (
-    "id" integer PRIMARY KEY,
+    "id" SERIAL PRIMARY KEY,
     "name" varchar(255) NOT NULL,
     "hall_id" integer NOT NULL
 );
 
 CREATE TABLE "category_item" (
-    "id" integer PRIMARY KEY,
+    "id" SERIAL PRIMARY KEY,
     "name" varchar(255) NOT NULL,
     "attribute" varchar(255)
 );
 
 CREATE TABLE "category_engineer" (
-    "id" integer PRIMARY KEY,
+    "id" SERIAL PRIMARY KEY,
     "name" varchar(255) NOT NULL,
     "attribute" varchar(255)
 );
 
 CREATE TABLE "type_item" (
-    "id" integer PRIMARY KEY,
+    "id" SERIAL PRIMARY KEY,
     "name" varchar(255) NOT NULL UNIQUE,
     "category_id" integer NOT NULL
 );
 
 CREATE TABLE "item" (
-    "id" integer PRIMARY KEY,
+    "id" SERIAL PRIMARY KEY,
     "name" varchar(255) NOT NULL,
     "type_id" integer NOT NULL,
     "hall_id" integer NOT NULL,
@@ -41,7 +41,7 @@ CREATE TABLE "item" (
 );
 
 CREATE TABLE "item_work_type" (
-    "id" integer PRIMARY KEY,
+    "id" SERIAL PRIMARY KEY,
     "seq_number" integer NOT NULL,
     "item_id" integer NOT NULL,
     "work_type_id" integer NOT NULL,
@@ -51,21 +51,45 @@ CREATE TABLE "item_work_type" (
 );
 
 CREATE TABLE "ready_item" (
-    "id" integer PRIMARY KEY,
+    "id" SERIAL PRIMARY KEY,
     "item_id" integer,
     "start_date" date NOT NULL,
     "completion_date" date NOT NULL,
     "counter" integer NOT NULL DEFAULT 1
 );
 
+CREATE TABLE "test_ready_item" (
+    "id" SERIAL PRIMARY KEY,
+    "ready_item_id" integer NOT NULL,
+    "lab_id" integer NOT NULL,
+    "test_date_start" date NOT NULL,
+    "test_date_finish" date NOT NULL,
+    "result" varchar(255),
+    UNIQUE ("ready_item_id", "lab_id")
+);
+
+CREATE TABLE "lab_worker_test_ready_item" (
+    "lab_worker_id" integer NOT NULL,
+    "ready_item_id" integer NOT NULL,
+    "test_date" date NOT NULL,
+    PRIMARY KEY ("lab_worker_id", "ready_item_id")
+);
+
 CREATE TABLE "lab_equip" (
-    "id" integer PRIMARY KEY,
+    "id" SERIAL PRIMARY KEY,
     "lab_id" integer NOT NULL,
     "name" varchar(255) NOT NULL
 );
 
+CREATE TABLE "lab_equip_item_test" (
+    "lab_equip_id" integer NOT NULL,
+    "item_id" integer NOT NULL,
+    "test_date" date NOT NULL,
+    PRIMARY KEY ("lab_equip_id", "item_id")
+);
+
 CREATE TABLE "employee" (
-    "id" integer PRIMARY KEY,
+    "id" SERIAL PRIMARY KEY,
     "name" varchar(255) NOT NULL,
     "hire_date" date NOT NULL,
     "current_position" varchar(255)
@@ -73,11 +97,16 @@ CREATE TABLE "employee" (
 
 CREATE TABLE "worker" (
     "employee_id" integer PRIMARY KEY,
+    "hall_id" integer NOT NULL,
+    "area_id" integer NOT NULL,
+    "work_team_id" integer NOT NULL,
     "category" varchar(255) NOT NULL
 );
 
 CREATE TABLE "engineer" (
     "employee_id" integer PRIMARY KEY,
+    "hall_id" integer NOT NULL,
+    "area_id" integer NOT NULL,
     "category_id" integer NOT NULL
 );
 
@@ -86,22 +115,23 @@ CREATE TABLE "worker_boss" (
 );
 
 CREATE TABLE "work_team" (
-    "id" integer PRIMARY KEY,
+    "id" SERIAL PRIMARY KEY,
     "name" varchar(255) NOT NULL,
-    "worker_boss_id" integer NOT NULL,
-    "area_id" integer NOT NULL
+--     "worker_boss_id" integer NOT NULL,
+    "area_id" integer NOT NULL,
+    "hall_id" integer NOT NULL
 );
 
--- Таблица для связи рабочих с бригадами
-CREATE TABLE "work_team_member" (
-    "work_team_id" integer NOT NULL,
-    "worker_id" integer NOT NULL,
-    "join_date" date NOT NULL,
-    PRIMARY KEY ("work_team_id", "worker_id")
-);
+-- -- Таблица для связи рабочих с бригадами
+-- CREATE TABLE "work_team_member" (
+--     "work_team_id" integer NOT NULL,
+--     "worker_id" integer NOT NULL,
+--     "join_date" date NOT NULL,
+--     PRIMARY KEY ("work_team_id", "worker_id")
+-- );
 
 CREATE TABLE "work_type" (
-    "id" integer PRIMARY KEY,
+    "id" SERIAL PRIMARY KEY,
     "work_name" varchar(255) NOT NULL,
     "area_id" integer NOT NULL,
     "work_team_id" integer NOT NULL
@@ -118,7 +148,7 @@ CREATE TABLE "hall_bosses" (
 );
 
 CREATE TABLE "masters" (
-    "id" integer PRIMARY KEY,
+    "id" SERIAL PRIMARY KEY,
     "area_id" integer NOT NULL,
     "engineer_id" integer NOT NULL,
     UNIQUE ("area_id", "engineer_id")
@@ -130,7 +160,7 @@ CREATE TABLE "lab_worker" (
 );
 
 CREATE TABLE "item_tests" (
-    "id" integer PRIMARY KEY,
+    "id" SERIAL PRIMARY KEY,
     "item_id" integer NOT NULL,
     "lab_worker_id" integer NOT NULL,
     "lab_equip_id" integer NOT NULL,
@@ -145,19 +175,44 @@ CREATE TABLE "lab_hall" (
    PRIMARY KEY ("hall_id", "lab_id")
 );
 
-CREATE TABLE "employee_movement" (
-    "id" integer PRIMARY KEY,
-    "employee_id" integer NOT NULL,
-    "position_from" varchar(255),
-    "position_to" varchar(255),
-    "date" date NOT NULL
-);
-
 CREATE TABLE "areas_items" (
     "area_id" integer NOT NULL,
     "item_id" integer NOT NULL,
     PRIMARY KEY ("area_id", "item_id")
 );
+
+ALTER TABLE "lab_equip_item_test" ADD CONSTRAINT "fk_lab_equip_item_test"
+    FOREIGN KEY ("lab_equip_id") REFERENCES "lab_equip" ("id");
+
+ALTER TABLE "lab_equip_item_test" ADD CONSTRAINT "fk_item_test"
+    FOREIGN KEY ("item_id") REFERENCES "item" ("id");
+
+ALTER TABLE "lab_worker_test_ready_item" ADD CONSTRAINT "fk_lab_worker_test_ready_item_lab"
+    FOREIGN KEY ("ready_item_id") REFERENCES "ready_item" ("id");
+
+ALTER TABLE "lab_worker_test_ready_item" ADD CONSTRAINT "fk_lab_worker_test_ready_item"
+    FOREIGN KEY ("lab_worker_id") REFERENCES "lab_worker" ("employee_id");
+
+ALTER TABLE "test_ready_item" ADD CONSTRAINT "fk_test_ready_item"
+    FOREIGN KEY ("ready_item_id") REFERENCES "ready_item" ("id");
+
+ALTER TABLE "test_ready_item" ADD CONSTRAINT "fk_test_lab_worker"
+    FOREIGN KEY ("lab_id") REFERENCES "testing_laboratory" ("id");
+
+ALTER TABLE "worker" ADD CONSTRAINT "fk_worker_hall"
+    FOREIGN KEY ("hall_id") REFERENCES "production_halls" ("id");
+
+ALTER TABLE "worker" ADD CONSTRAINT "fk_worker_area"
+    FOREIGN KEY ("area_id") REFERENCES "production_area" ("id");
+
+ALTER TABLE "worker" ADD CONSTRAINT "fk_worker_team"
+    FOREIGN KEY ("work_team_id") REFERENCES "work_team" ("id");
+
+ALTER TABLE "engineer" ADD CONSTRAINT "fk_engineer_hall"
+    FOREIGN KEY ("hall_id") REFERENCES "production_halls" ("id");
+
+ALTER TABLE "engineer" ADD CONSTRAINT "fk_engineer_area"
+    FOREIGN KEY ("area_id") REFERENCES "production_area" ("id");
 
 ALTER TABLE "areas_items" ADD CONSTRAINT "fk_area_item"
     FOREIGN KEY ("area_id") REFERENCES "production_area" ("id");
@@ -201,17 +256,17 @@ ALTER TABLE "engineer" ADD CONSTRAINT "fk_engineer_category"
 ALTER TABLE "worker_boss" ADD CONSTRAINT "fk_boss_worker"
     FOREIGN KEY ("worker_id") REFERENCES "worker" ("employee_id");
 
-ALTER TABLE "work_team" ADD CONSTRAINT "fk_team_boss"
-    FOREIGN KEY ("worker_boss_id") REFERENCES "worker_boss" ("worker_id");
+-- ALTER TABLE "work_team" ADD CONSTRAINT "fk_team_boss"
+--     FOREIGN KEY ("worker_boss_id") REFERENCES "worker_boss" ("worker_id");
 
 ALTER TABLE "work_team" ADD CONSTRAINT "fk_team_area"
     FOREIGN KEY ("area_id") REFERENCES "production_area" ("id");
 
-ALTER TABLE "work_team_member" ADD CONSTRAINT "fk_member_team"
-    FOREIGN KEY ("work_team_id") REFERENCES "work_team" ("id");
-
-ALTER TABLE "work_team_member" ADD CONSTRAINT "fk_member_worker"
-    FOREIGN KEY ("worker_id") REFERENCES "worker" ("employee_id");
+-- ALTER TABLE "work_team_member" ADD CONSTRAINT "fk_member_team"
+--     FOREIGN KEY ("work_team_id") REFERENCES "work_team" ("id");
+--
+-- ALTER TABLE "work_team_member" ADD CONSTRAINT "fk_member_worker"
+--     FOREIGN KEY ("worker_id") REFERENCES "worker" ("employee_id");
 
 ALTER TABLE "work_type" ADD CONSTRAINT "fk_work_area"
     FOREIGN KEY ("area_id") REFERENCES "production_area" ("id");
@@ -257,6 +312,3 @@ ALTER TABLE "lab_hall" ADD CONSTRAINT "fk_lab_hall_lab"
 
 ALTER TABLE "lab_hall" ADD CONSTRAINT "fk_lab_hall_hall"
     FOREIGN KEY ("hall_id") REFERENCES "production_halls" ("id");
-
-ALTER TABLE "employee_movement" ADD CONSTRAINT "fk_movement_employee"
-    FOREIGN KEY ("employee_id") REFERENCES "employee" ("id");

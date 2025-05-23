@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
 	//"time"
 
 	"github.com/go-chi/chi/v5"
@@ -61,6 +62,113 @@ func (h *Handler) InitRoutes(router chi.Router) {
 		r.Get("/category/{category_id}", h.getAllItemsByCategory)
 		r.Get("/area/{area_id}", h.getAllItemsByAreaId)
 		r.Get("/TimeInterval", h.getAllItemsByTimeInterval)
+		r.Get("/{item_id}/works", h.getItemWorks)      // Новый маршрут для получения работ по изделию
+		r.Get("/{item_id}/teams", h.getItemTeams)      // Новый маршрут для получения бригад, участвующих в сборке изделия
+		r.Get("/{item_id}/labs", h.getItemTestingLabs) // Получение лабораторий по изделию
+	})
+
+	router.Route("/staff", func(r chi.Router) {
+		r.Get("/ping", h.ping)
+
+		// Новые маршруты для работы с персоналом
+		r.Get("/hall/{hall_id}", h.getHallStaff)                      // Кадровый состав цеха
+		r.Get("/all", h.getAllStaff)                                  // Кадровый состав всего предприятия
+		r.Get("/{type}/category/{category_id}", h.getStaffByCategory) // Кадры по категориям
+	})
+
+	router.Route("/areas", func(r chi.Router) {
+		r.Get("/ping", h.ping)
+
+		// Новые маршруты для работы с участками
+		r.Get("/hall/{hall_id}", h.getAreasByHall) // Участки указанного цеха
+		r.Get("/all", h.getAllAreas)               // Все участки предприятия
+		r.Get("/{area_id}/boss", h.getAreaBoss)    // Начальник конкретного участка
+	})
+
+	router.Route("/work-teams", func(r chi.Router) {
+		r.Get("/ping", h.ping)
+
+		// Новые маршруты для работы с бригадами
+		r.Get("/area/{area_id}", h.getWorkTeamsByArea) // Бригады указанного участка
+		r.Get("/hall/{hall_id}", h.getWorkTeamsByHall) // Бригады указанного цеха
+	})
+
+	router.Route("/masters", func(r chi.Router) {
+		r.Get("/ping", h.ping)
+
+		// Новые маршруты для работы с мастерами
+		r.Get("/area/{area_id}", h.getMastersByArea) // Мастера указанного участка
+		r.Get("/hall/{hall_id}", h.getMastersByHall) // Мастера указанного цеха
+	})
+
+	router.Route("/current-items", func(r chi.Router) {
+		r.Get("/ping", h.ping)
+
+		// Маршруты для получения текущих изделий по категории
+		r.Get("/category/{category_id}/area/{area_id}", h.getCurrentItemsByCategoryAndArea) // По категории и участку
+		r.Get("/category/{category_id}/hall/{hall_id}", h.getCurrentItemsByCategoryAndHall) // По категории и цеху
+		r.Get("/category/{category_id}", h.getCurrentItemsByCategory)                       // По категории на всем предприятии
+
+		// Маршруты для получения всех текущих изделий (без фильтрации по категории)
+		r.Get("/area/{area_id}", h.getCurrentItemsByArea) // По участку
+		r.Get("/hall/{hall_id}", h.getCurrentItemsByHall) // По цеху
+		r.Get("/all", h.getAllCurrentItems)               // По всему предприятию
+	})
+
+	router.Route("/tested-items", func(r chi.Router) {
+		r.Get("/ping", h.ping)
+		// Маршруты для получения изделий, прошедших испытания
+		r.Get("/lab/{lab_id}/category/{category_id}", h.getTestedItemsByLabAndCategoryInPeriod) // По лаборатории, категории и периоду
+		r.Get("/lab/{lab_id}", h.getTestedItemsByLabInPeriod)                                   // По лаборатории и периоду
+	})
+
+	router.Route("/lab-workers", func(r chi.Router) {
+		r.Get("/ping", h.ping)
+		// Маршруты для получения информации об испытателях
+		// GET /lab-workers/lab/{lab_id}?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD&item_id=X&category_id=Y
+		r.Get("/lab/{lab_id}", h.getLabWorkersByItemOrCategoryInLabInPeriod) // Фильтры item_id и category_id - опциональные query параметры
+		// GET /lab-workers/all/lab/{lab_id}?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
+		r.Get("/all/lab/{lab_id}", h.getLabWorkersInLabInPeriod) // Все испытатели в лаборатории за период
+	})
+
+	router.Route("/lab-equipment", func(r chi.Router) {
+		r.Get("/ping", h.ping)
+		// Маршруты для получения информации об оборудовании лабораторий
+		// GET /lab-equipment/lab/{lab_id}?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD&item_id=X&category_id=Y
+		r.Get("/lab/{lab_id}", h.getLabEquipmentByItemOrCategoryInLabInPeriod)
+		// GET /lab-equipment/all/lab/{lab_id}?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD
+		r.Get("/all/lab/{lab_id}", h.getLabEquipmentInLabInPeriod)
+	})
+
+	// Новый маршрут для создания сущностей
+	router.Route("/create", func(r chi.Router) {
+		r.Get("/ping", h.ping)
+
+		// POST /create/hall создаёт новый цех
+		r.Post("/hall", h.createProductionHall)
+		// POST /create/area создаёт новый участок
+		r.Post("/area", h.createProductionArea)
+		// POST /create/item-category создаёт новую категорию изделия
+		r.Post("/item-category", h.createCategoryItem)
+		// POST /create/item-type создаёт новый тип изделия
+		r.Post("/item-type", h.createTypeItem)
+		// POST /create/item создаёт новое изделие
+		r.Post("/item", h.createItem)
+		// POST /create/employee создаёт нового сотрудника
+		r.Post("/employee", h.createEmployee)
+		// POST /create/lab создаёт новую лабораторию
+		r.Post("/lab", h.createTestingLaboratory)
+		// POST /create/work-team создаёт новую рабочую бригаду
+		r.Post("/work-team", h.createWorkTeam)
+		// POST /create/area-boss назначает начальника участка
+		r.Post("/area-boss", h.createAreaBoss)
+		// POST /create/hall-boss назначает начальника цеха
+		r.Post("/hall-boss", h.createHallBoss)
+		// POST /create/master создаёт нового мастера
+		r.Post("/master", h.createMaster)
+		// POST /create/worker-boss назначает бригадира
+		r.Post("/worker-boss", h.createWorkerBoss)
+
 	})
 }
 
