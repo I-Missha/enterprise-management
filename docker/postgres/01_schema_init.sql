@@ -132,12 +132,6 @@ CREATE TABLE "lab_equip" (
     "name" varchar(255) NOT NULL
 );
 
-CREATE TABLE "lab_equip_item_test" (
-    "lab_equip_id" integer NOT NULL,
-    "item_id" integer NOT NULL,
-    "test_date" date NOT NULL,
-    PRIMARY KEY ("lab_equip_id", "item_id")
-);
 
 CREATE TABLE "employee" (
     "id" SERIAL PRIMARY KEY,
@@ -173,13 +167,6 @@ CREATE TABLE "work_team" (
     "hall_id" integer NOT NULL
 );
 
--- -- Таблица для связи рабочих с бригадами
--- CREATE TABLE "work_team_member" (
---     "work_team_id" integer NOT NULL,
---     "worker_id" integer NOT NULL,
---     "join_date" date NOT NULL,
---     PRIMARY KEY ("work_team_id", "worker_id")
--- );
 
 CREATE TABLE "work_type" (
     "id" SERIAL PRIMARY KEY,
@@ -231,12 +218,6 @@ CREATE TABLE "areas_items" (
     "item_id" integer NOT NULL,
     PRIMARY KEY ("area_id", "item_id")
 );
-
-ALTER TABLE "lab_equip_item_test" ADD CONSTRAINT "fk_lab_equip_item_test"
-    FOREIGN KEY ("lab_equip_id") REFERENCES "lab_equip" ("id");
-
-ALTER TABLE "lab_equip_item_test" ADD CONSTRAINT "fk_item_test"
-    FOREIGN KEY ("item_id") REFERENCES "item" ("id");
 
 -- Внешние ключи для новых таблиц завершённых изделий и испытаний
 ALTER TABLE "completed_item" ADD CONSTRAINT "fk_completed_item"
