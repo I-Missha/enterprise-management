@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Record Equipment Usage{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h1>Record Equipment Usage</h1>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">New Equipment Usage Record</h5>
+                    <p class="text-muted">Track equipment usage during testing sessions</p>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="completed_item_test_id" class="form-label">Test Session *</label>
+                                <select class="form-select" id="completed_item_test_id" name="completed_item_test_id" required>
+                                    <option value="">Select test session...</option>
+                                    {% for test in active_tests %}
+                                    <option value="{{ test.CompletedItemTest.id }}" data-lab-id="{{ test.CompletedItemTest.lab_id }}">
+                                        Test #{{ test.CompletedItemTest.id }} - {{ test.Item.name }} 
+                                        ({{ test.TestingLaboratory.name }}, Started: {{ test.CompletedItemTest.test_start_date.strftime('%Y-%m-%d') }})
+                                        {% if test.CompletedItemTest.test_status == 'passed' %}
+                                            - ✓ Passed
+                                        {% elif test.CompletedItemTest.test_status == 'failed' %}
+                                            - ✗ Failed
+                                        {% else %}
+                                            - In Progress
+                                        {% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Select the test session where equipment was used</div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label for="lab_equip_id" class="form-label">Equipment *</label>
+                                <select class="form-select" id="lab_equip_id" name="lab_equip_id" required>
+                                    <option value="">Select equipment...</option>
+                                    {% for equip in equipment %}
+                                    <option value="{{ equip.LabEquip.id }}" data-lab-id="{{ equip.LabEquip.lab_id }}">
+                                        {{ equip.LabEquip.name }} ({{ equip.TestingLaboratory.name }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">Select the equipment that was used</div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">                            <div class="col-md-6">
+                                <label for="usage_date" class="form-label">Usage Date *</label>
+                                <input type="date" class="form-control" id="usage_date" name="usage_date" required>
+                                <div class="form-text">Date when the equipment was used</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="duration_hours" class="form-label">Duration (Hours)</label>
+                                <input type="number" step="0.01" min="0" max="24" class="form-control" 
+                                       id="duration_hours" name="duration_hours" 
+                                       placeholder="e.g., 2.5">
+                                <div class="form-text">How long the equipment was used (optional)</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Usage Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="4" 
+                                      placeholder="Record any observations, settings, or notes about equipment usage..."></textarea>
+                            <div class="form-text">Optional notes about equipment usage, settings, or observations</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary me-2">
+                                    <i class="fa fa-save"></i> Record Usage
+                                </button>
+                                <a href="{{ url_for('main.equipment_usage') }}" class="btn btn-secondary">
+                                    <i class="fa fa-times"></i> Cancel
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const testSelect = document.getElementById('completed_item_test_id');
+    const equipmentSelect = document.getElementById('lab_equip_id');
+    const usageDateInput = document.getElementById('usage_date');
+    
+    // Filter equipment based on selected test's laboratory
+    function filterEquipmentByLab() {
+        const selectedTest = testSelect.value;
+        const selectedTestOption = testSelect.querySelector(`option[value="${selectedTest}"]`);
+        const testLabId = selectedTestOption ? selectedTestOption.getAttribute('data-lab-id') : null;
+        
+        const equipmentOptions = equipmentSelect.querySelectorAll('option');
+        
+        equipmentOptions.forEach(option => {
+            if (option.value === '') {
+                option.style.display = 'block';
+                return;
+            }
+            
+            const equipLabId = option.getAttribute('data-lab-id');
+            if (!testLabId || equipLabId === testLabId) {
+                option.style.display = 'block';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+        
+        // Reset equipment selection if current selection is not valid for new lab
+        if (equipmentSelect.value) {
+            const currentOption = equipmentSelect.querySelector(`option[value="${equipmentSelect.value}"]`);
+            if (currentOption && currentOption.style.display === 'none') {
+                equipmentSelect.value = '';
+            }
+        }
+    }
+    
+    testSelect.addEventListener('change', filterEquipmentByLab);
+    
+    // Validate usage date against test dates
+    testSelect.addEventListener('change', function() {
+        const selectedOption = this.querySelector(`option[value="${this.value}"]`);
+        if (selectedOption) {
+            const testText = selectedOption.textContent;
+            // Extract test start date from the option text
+            const dateMatch = testText.match(/Started: (\d{4}-\d{2}-\d{2})/);
+            if (dateMatch) {
+                const testStartDate = dateMatch[1];
+                usageDateInput.min = testStartDate;
+                
+                // If current usage date is before test start date, update it
+                if (usageDateInput.value && usageDateInput.value < testStartDate) {
+                    usageDateInput.value = testStartDate;
+                }
+            }
+        }
+    });
+      // Set max date to today
+    const today = new Date().toISOString().split('T')[0];
+    usageDateInput.value = today;  // Set today as default usage date
+    usageDateInput.max = today;
+    
+    // Initial filtering
+    filterEquipmentByLab();
+});
+</script>
+{% endblock %}

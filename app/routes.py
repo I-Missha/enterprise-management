@@ -798,7 +798,7 @@ def lab_tested_items():
                          selected_lab=lab_id, selected_category=category_id,
                          start_date=start_date, end_date=end_date)
 
-# 12. Получить список испытателей для изделий в лаборатории за период
+# 12. Получить список мастеров для изделий в лаборатории за период
 @main.route('/queries/lab_testers')
 def lab_testers():
     lab_id = request.args.get('lab_id', type=int)
@@ -972,3 +972,227 @@ def delete_completed_item(id):
     db.session.commit()
     flash('Готовое изделие удалено!', 'success')
     return redirect(url_for('main.completed_items'))
+
+# Маршруты для испытаний готовых изделий
+@main.route('/tested_items')
+def tested_items():
+    tested_items = db.session.query(
+        CompletedItemTest, CompletedItem, Item, TypeItem, TestingLaboratory, Employee
+    ).join(
+        CompletedItem, CompletedItemTest.completed_item_id == CompletedItem.id
+    ).join(
+        Item, CompletedItem.item_id == Item.id
+    ).join(
+        TypeItem, Item.type_id == TypeItem.id
+    ).join(
+        TestingLaboratory, CompletedItemTest.lab_id == TestingLaboratory.id
+    ).join(
+        Employee, CompletedItemTest.conducted_by_worker_id == Employee.id
+    ).all()
+    return render_template('tested_items/list.html', tested_items=tested_items)
+
+@main.route('/tested_items/add', methods=['GET', 'POST'])
+def add_tested_item():
+    if request.method == 'POST':
+        completed_item_id = request.form['completed_item_id']
+        lab_id = request.form['lab_id']
+        test_start_date = datetime.strptime(request.form['test_start_date'], '%Y-%m-%d').date()
+        test_completion_date = None
+        if request.form.get('test_completion_date'):
+            test_completion_date = datetime.strptime(request.form['test_completion_date'], '%Y-%m-%d').date()
+        test_result = request.form.get('test_result', '')
+        test_status = request.form['test_status']
+        conducted_by_worker_id = request.form['conducted_by_worker_id']
+        notes = request.form.get('notes', '')
+        
+        tested_item = CompletedItemTest(
+            completed_item_id=completed_item_id,
+            lab_id=lab_id,
+            test_start_date=test_start_date,
+            test_completion_date=test_completion_date,
+            test_result=test_result,
+            test_status=test_status,
+            conducted_by_worker_id=conducted_by_worker_id,
+            notes=notes,
+            created_at=datetime.now().date(),
+            updated_at=datetime.now().date()
+        )
+        db.session.add(tested_item)
+        db.session.commit()
+        flash('Испытание готового изделия добавлено успешно!', 'success')
+        return redirect(url_for('main.tested_items'))
+    
+    completed_items = db.session.query(CompletedItem, Item).join(Item, CompletedItem.item_id == Item.id).all()
+    laboratories = TestingLaboratory.query.all()
+    lab_workers = db.session.query(LabWorker, Employee).join(Employee, LabWorker.employee_id == Employee.id).all()
+    
+    return render_template('tested_items/add.html', 
+                         completed_items=completed_items, 
+                         laboratories=laboratories, 
+                         lab_workers=lab_workers)
+
+@main.route('/tested_items/edit/<int:id>', methods=['GET', 'POST'])
+def edit_tested_item(id):
+    tested_item = CompletedItemTest.query.get_or_404(id)
+    if request.method == 'POST':
+        tested_item.completed_item_id = request.form['completed_item_id']
+        tested_item.lab_id = request.form['lab_id']
+        tested_item.test_start_date = datetime.strptime(request.form['test_start_date'], '%Y-%m-%d').date()
+        if request.form.get('test_completion_date'):
+            tested_item.test_completion_date = datetime.strptime(request.form['test_completion_date'], '%Y-%m-%d').date()
+        else:
+            tested_item.test_completion_date = None
+        tested_item.test_result = request.form.get('test_result', '')
+        tested_item.test_status = request.form['test_status']
+        tested_item.conducted_by_worker_id = request.form['conducted_by_worker_id']
+        tested_item.notes = request.form.get('notes', '')
+        tested_item.updated_at = datetime.now().date()
+        db.session.commit()
+        flash('Испытание готового изделия обновлено успешно!', 'success')
+        return redirect(url_for('main.tested_items'))
+    
+    completed_items = db.session.query(CompletedItem, Item).join(Item, CompletedItem.item_id == Item.id).all()
+    laboratories = TestingLaboratory.query.all()
+    lab_workers = db.session.query(LabWorker, Employee).join(Employee, LabWorker.employee_id == Employee.id).all()
+    
+    return render_template('tested_items/edit.html', 
+                         tested_item=tested_item, 
+                         completed_items=completed_items, 
+                         laboratories=laboratories, 
+                         lab_workers=lab_workers)
+
+@main.route('/tested_items/delete/<int:id>')
+def delete_tested_item(id):
+    tested_item = CompletedItemTest.query.get_or_404(id)
+    db.session.delete(tested_item)
+    db.session.commit()
+    flash('Испытание готового изделия удалено!', 'success')
+    return redirect(url_for('main.tested_items'))
+
+# Маршруты для управления использованием оборудования в испытаниях
+@main.route('/equipment_usage')
+def equipment_usage():
+    """Список использования оборудования в испытаниях"""
+    usage_records = db.session.query(
+        TestEquipmentUsage,
+        CompletedItemTest,
+        CompletedItem,
+        Item,
+        LabEquip,
+        TestingLaboratory,
+        Employee
+    ).join(
+        CompletedItemTest, TestEquipmentUsage.completed_item_test_id == CompletedItemTest.id
+    ).join(
+        CompletedItem, CompletedItemTest.completed_item_id == CompletedItem.id
+    ).join(
+        Item, CompletedItem.item_id == Item.id
+    ).join(
+        LabEquip, TestEquipmentUsage.lab_equip_id == LabEquip.id
+    ).join(
+        TestingLaboratory, LabEquip.lab_id == TestingLaboratory.id
+    ).join(
+        LabWorker, CompletedItemTest.conducted_by_worker_id == LabWorker.employee_id
+    ).join(
+        Employee, LabWorker.employee_id == Employee.id
+    ).order_by(TestEquipmentUsage.usage_date.desc()).all()
+    
+    return render_template('equipment_usage/list.html', usage_records=usage_records)
+
+@main.route('/equipment_usage/add', methods=['GET', 'POST'])
+def add_equipment_usage():
+    """Добавить новое использование оборудования"""
+    if request.method == 'POST':
+        usage = TestEquipmentUsage(
+            completed_item_test_id=request.form['completed_item_test_id'],
+            lab_equip_id=request.form['lab_equip_id'],
+            usage_date=datetime.strptime(request.form['usage_date'], '%Y-%m-%d').date(),
+            duration_hours=float(request.form['duration_hours']) if request.form['duration_hours'] else None,
+            notes=request.form.get('notes'),
+            created_at=date.today()
+        )
+        
+        db.session.add(usage)
+        db.session.commit()
+        flash('Запись об использовании оборудования добавлена!', 'success')
+        return redirect(url_for('main.equipment_usage'))
+    
+    # Получить все активные тесты
+    active_tests = db.session.query(
+        CompletedItemTest,
+        CompletedItem,
+        Item,
+        TestingLaboratory
+    ).join(
+        CompletedItem, CompletedItemTest.completed_item_id == CompletedItem.id
+    ).join(
+        Item, CompletedItem.item_id == Item.id
+    ).join(
+        TestingLaboratory, CompletedItemTest.lab_id == TestingLaboratory.id
+    ).filter(
+        CompletedItemTest.test_status.in_(['in_progress', 'passed', 'failed'])
+    ).all()
+    
+    # Получить все оборудование
+    equipment = db.session.query(
+        LabEquip,
+        TestingLaboratory
+    ).join(
+        TestingLaboratory, LabEquip.lab_id == TestingLaboratory.id
+    ).all()
+    
+    return render_template('equipment_usage/add.html', 
+                         active_tests=active_tests, 
+                         equipment=equipment)
+
+@main.route('/equipment_usage/edit/<int:id>', methods=['GET', 'POST'])
+def edit_equipment_usage(id):
+    """Редактировать использование оборудования"""
+    usage = TestEquipmentUsage.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        usage.completed_item_test_id = request.form['completed_item_test_id']
+        usage.lab_equip_id = request.form['lab_equip_id']
+        usage.usage_date = datetime.strptime(request.form['usage_date'], '%Y-%m-%d').date()
+        usage.duration_hours = float(request.form['duration_hours']) if request.form['duration_hours'] else None
+        usage.notes = request.form.get('notes')
+        
+        db.session.commit()
+        flash('Запись об использовании оборудования обновлена!', 'success')
+        return redirect(url_for('main.equipment_usage'))
+    
+    # Получить все активные тесты
+    active_tests = db.session.query(
+        CompletedItemTest,
+        CompletedItem,
+        Item,
+        TestingLaboratory
+    ).join(
+        CompletedItem, CompletedItemTest.completed_item_id == CompletedItem.id
+    ).join(
+        Item, CompletedItem.item_id == Item.id
+    ).join(
+        TestingLaboratory, CompletedItemTest.lab_id == TestingLaboratory.id
+    ).all()
+    
+    # Получить все оборудование
+    equipment = db.session.query(
+        LabEquip,
+        TestingLaboratory
+    ).join(
+        TestingLaboratory, LabEquip.lab_id == TestingLaboratory.id
+    ).all()
+    
+    return render_template('equipment_usage/edit.html', 
+                         usage=usage,
+                         active_tests=active_tests, 
+                         equipment=equipment)
+
+@main.route('/equipment_usage/delete/<int:id>')
+def delete_equipment_usage(id):
+    """Удалить запись об использовании оборудования"""
+    usage = TestEquipmentUsage.query.get_or_404(id)
+    db.session.delete(usage)
+    db.session.commit()
+    flash('Запись об использовании оборудования удалена!', 'success')
+    return redirect(url_for('main.equipment_usage'))

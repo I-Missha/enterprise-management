@@ -210,7 +210,23 @@ class ItemTests(db.Model):
     
     __table_args__ = (db.UniqueConstraint('item_id', 'lab_worker_id', 'lab_equip_id', 'test_date'),)
 
-# Дополнительные модели для запросов
+class CompletedItemTest(db.Model):
+    __tablename__ = 'completed_item_test'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    completed_item_id = db.Column(db.Integer, db.ForeignKey('completed_item.id'), nullable=False)
+    lab_id = db.Column(db.Integer, db.ForeignKey('testing_laboratory.id'), nullable=False)
+    test_start_date = db.Column(db.Date, nullable=False)
+    test_completion_date = db.Column(db.Date)
+    test_result = db.Column(db.String(255))
+    test_status = db.Column(db.String(50), nullable=False, default='in_progress')  # in_progress, passed, failed
+    conducted_by_worker_id = db.Column(db.Integer, db.ForeignKey('lab_worker.employee_id'), nullable=False)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.Date, nullable=False)
+    updated_at = db.Column(db.Date, nullable=False)
+    
+    __table_args__ = (db.UniqueConstraint('completed_item_id', 'lab_id', 'test_start_date'),)
+
 class AreaBoss(db.Model):
     __tablename__ = 'area_boss'
     
@@ -248,3 +264,18 @@ class LabHall(db.Model):
     
     lab_id = db.Column(db.Integer, db.ForeignKey('testing_laboratory.id'), primary_key=True)
     hall_id = db.Column(db.Integer, db.ForeignKey('production_hall.id'), primary_key=True)
+
+class TestEquipmentUsage(db.Model):
+    __tablename__ = 'test_equipment_usage'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    completed_item_test_id = db.Column(db.Integer, db.ForeignKey('completed_item_test.id'), nullable=False)
+    lab_equip_id = db.Column(db.Integer, db.ForeignKey('lab_equip.id'), nullable=False)
+    usage_date = db.Column(db.Date, nullable=False)
+    duration_hours = db.Column(db.Numeric(5, 2))
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.Date, nullable=False)
+    
+    # Relationships
+    completed_item_test = db.relationship('CompletedItemTest', backref='equipment_usage')
+    lab_equipment = db.relationship('LabEquip', backref='usage_records')

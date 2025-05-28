@@ -96,9 +96,7 @@
                 </div>
             </div>
         </a>
-    </div>
-
-    <!-- Лабораторное оборудование -->
+    </div>    <!-- Лабораторное оборудование -->
     <div class="col-md-6 col-lg-4">
         <a href="{{ url_for('main.equipment') }}" class="text-decoration-none">
             <div class="card dashboard-card h-100">
@@ -106,6 +104,31 @@
                     <i class="fas fa-microscope"></i>
                     <h5 class="card-title">Лабораторное оборудование</h5>
                     <p class="card-text">Учет и управление лабораторным оборудованием</p>
+                </div>
+            </div>
+        </a>
+    </div>
+      <!-- Тестирование изделий -->
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ url_for('main.tested_items') }}" class="text-decoration-none">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <i class="fas fa-vial"></i>
+                    <h5 class="card-title">Тестирование изделий</h5>
+                    <p class="card-text">Управление тестированием готовых изделий</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    
+    <!-- Использование оборудования -->
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ url_for('main.equipment_usage') }}" class="text-decoration-none">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <i class="fas fa-cogs"></i>
+                    <h5 class="card-title">Использование оборудования</h5>
+                    <p class="card-text">Учет использования оборудования в испытаниях</p>
                 </div>
             </div>
         </a>
