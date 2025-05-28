@@ -95,19 +95,40 @@
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title mb-0">
-                    <i class="fas fa-chart-line"></i> Быстрые отчеты
+                    <i class="fas fa-search"></i> Запросы и аналитика
                 </h5>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <a href="{{ url_for('main.reports') }}" class="btn btn-outline-primary btn-lg w-100 mb-3">
-                            <i class="fas fa-chart-bar"></i> Производственная сводка
+            <div class="card-body">                <div class="row">
+                    <div class="col-md-4">
+                        <a href="{{ url_for('main.queries') }}" class="btn btn-outline-primary btn-lg w-100 mb-3">
+                            <i class="fas fa-database"></i> Производственные запросы
                         </a>
                     </div>
-                    <div class="col-md-6">
-                        <a href="{{ url_for('main.reports') }}" class="btn btn-outline-success btn-lg w-100 mb-3">
-                            <i class="fas fa-tasks"></i> Статус изделий
+                    <div class="col-md-4">
+                        <a href="{{ url_for('main.personnel_by_hall') }}" class="btn btn-outline-info btn-lg w-100 mb-3">
+                            <i class="fas fa-users"></i> Персонал по цехам
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ url_for('main.items_by_hall') }}" class="btn btn-outline-success btn-lg w-100 mb-3">
+                            <i class="fas fa-cogs"></i> Изделия по цехам
+                        </a>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <a href="{{ url_for('main.teams_composition') }}" class="btn btn-outline-warning btn-lg w-100 mb-3">
+                            <i class="fas fa-user-friends"></i> Состав бригад
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ url_for('main.current_items') }}" class="btn btn-outline-danger btn-lg w-100 mb-3">
+                            <i class="fas fa-clock"></i> Текущие изделия
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ url_for('main.lab_equipment_usage') }}" class="btn btn-outline-secondary btn-lg w-100 mb-3">
+                            <i class="fas fa-flask"></i> Использование оборудования
                         </a>
                     </div>
                 </div>
