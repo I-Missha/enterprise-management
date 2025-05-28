@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Добавить готовое изделие{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-plus"></i> Добавить готовое изделие
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="item_id" class="form-label">Изделие <span class="text-danger">*</span></label>
+                                <select class="form-select" id="item_id" name="item_id" required>
+                                    <option value="">Выберите изделие</option>
+                                    {% for item in items %}
+                                    <option value="{{ item.id }}">{{ item.name }} (ID: {{ item.id }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="quantity_produced" class="form-label">Количество произведено <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="quantity_produced" name="quantity_produced" 
+                                       min="1" value="1" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="production_start_date" class="form-label">Дата начала производства <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="production_start_date" name="production_start_date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="production_completion_date" class="form-label">Дата завершения производства <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="production_completion_date" name="production_completion_date" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="assembled_by_team_id" class="form-label">Бригада сборки <span class="text-danger">*</span></label>
+                                <select class="form-select" id="assembled_by_team_id" name="assembled_by_team_id" required>
+                                    <option value="">Выберите бригаду</option>
+                                    {% for team in teams %}
+                                    <option value="{{ team.id }}">{{ team.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="assembled_in_hall_id" class="form-label">Цех сборки <span class="text-danger">*</span></label>
+                                <select class="form-select" id="assembled_in_hall_id" name="assembled_in_hall_id" required>
+                                    <option value="">Выберите цех</option>
+                                    {% for hall in halls %}
+                                    <option value="{{ hall.id }}">{{ hall.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="final_area_id" class="form-label">Финальный участок <span class="text-danger">*</span></label>
+                                <select class="form-select" id="final_area_id" name="final_area_id" required>
+                                    <option value="">Выберите участок</option>
+                                    {% for area in areas %}
+                                    <option value="{{ area.id }}" data-hall="{{ area.hall_id }}">{{ area.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Примечания</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                  placeholder="Дополнительная информация о готовом изделии"></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('main.completed_items') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Сохранить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Фильтрация участков по выбранному цеху
+document.getElementById('assembled_in_hall_id').addEventListener('change', function() {
+    const hallId = this.value;
+    const areaSelect = document.getElementById('final_area_id');
+    const areas = areaSelect.querySelectorAll('option[data-hall]');
+    
+    // Показываем все участки если цех не выбран
+    if (!hallId) {
+        areas.forEach(option => option.style.display = 'block');
+        return;
+    }
+    
+    // Фильтруем участки по выбранному цеху
+    areas.forEach(option => {
+        if (option.dataset.hall === hallId) {
+            option.style.display = 'block';
+        } else {
+            option.style.display = 'none';
+        }
+    });
+    
+    // Сбрасываем выбор участка если он не подходит к выбранному цеху
+    if (areaSelect.value && areaSelect.querySelector(`option[value="${areaSelect.value}"]`).dataset.hall !== hallId) {
+        areaSelect.value = '';
+    }
+});
+
+// Проверка дат
+document.getElementById('production_completion_date').addEventListener('change', function() {
+    const startDate = document.getElementById('production_start_date').value;
+    const endDate = this.value;
+    
+    if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
+        alert('Дата завершения не может быть раньше даты начала производства');
+        this.value = '';
+    }
+});
+</script>
+{% endblock %}

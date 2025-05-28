@@ -42,15 +42,15 @@
                         <a class="nav-link" href="{{ url_for('main.teams') }}">
                             <i class="fas fa-user-friends"></i> Бригады
                         </a>
-                    </li>
-                    <li class="nav-item dropdown">
+                    </li>                    <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-cogs"></i> Изделия
                         </a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{{ url_for('main.items') }}">Изделия</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.completed_items') }}">Готовые изделия</a></li>
                         </ul>
-                    </li>                    <li class="nav-item dropdown">
+                    </li><li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-flask"></i> Лаборатории
                         </a>

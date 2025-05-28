@@ -888,3 +888,87 @@ def lab_equipment_usage():
 
 # 14. Получить число и перечень изделий, собираемых в настоящее время (дублирует 8-й запрос)
 # Используем тот же маршрут current_items
+
+# Маршруты для готовых изделий
+@main.route('/completed_items')
+def completed_items():
+    completed_items = db.session.query(
+        CompletedItem, Item, TypeItem, ProductionHall, WorkTeam, ProductionArea
+    ).join(
+        Item, CompletedItem.item_id == Item.id
+    ).join(
+        TypeItem, Item.type_id == TypeItem.id
+    ).join(
+        ProductionHall, CompletedItem.assembled_in_hall_id == ProductionHall.id
+    ).join(
+        WorkTeam, CompletedItem.assembled_by_team_id == WorkTeam.id
+    ).join(
+        ProductionArea, CompletedItem.final_area_id == ProductionArea.id
+    ).all()
+    return render_template('completed_items/list.html', completed_items=completed_items)
+
+@main.route('/completed_items/add', methods=['GET', 'POST'])
+def add_completed_item():
+    if request.method == 'POST':
+        item_id = request.form['item_id']
+        production_start_date = datetime.strptime(request.form['production_start_date'], '%Y-%m-%d').date()
+        production_completion_date = datetime.strptime(request.form['production_completion_date'], '%Y-%m-%d').date()
+        assembled_by_team_id = request.form['assembled_by_team_id']
+        assembled_in_hall_id = request.form['assembled_in_hall_id']
+        final_area_id = request.form['final_area_id']
+        quantity_produced = request.form['quantity_produced']
+        notes = request.form.get('notes', '')
+        
+        completed_item = CompletedItem(
+            item_id=item_id,
+            production_start_date=production_start_date,
+            production_completion_date=production_completion_date,
+            assembled_by_team_id=assembled_by_team_id,
+            assembled_in_hall_id=assembled_in_hall_id,
+            final_area_id=final_area_id,
+            quantity_produced=quantity_produced,
+            notes=notes,
+            created_at=datetime.now().date(),
+            updated_at=datetime.now().date()
+        )
+        db.session.add(completed_item)
+        db.session.commit()
+        flash('Готовое изделие добавлено успешно!', 'success')
+        return redirect(url_for('main.completed_items'))
+    
+    items = Item.query.all()
+    teams = WorkTeam.query.all()
+    halls = ProductionHall.query.all()
+    areas = ProductionArea.query.all()
+    return render_template('completed_items/add.html', items=items, teams=teams, halls=halls, areas=areas)
+
+@main.route('/completed_items/edit/<int:id>', methods=['GET', 'POST'])
+def edit_completed_item(id):
+    completed_item = CompletedItem.query.get_or_404(id)
+    if request.method == 'POST':
+        completed_item.item_id = request.form['item_id']
+        completed_item.production_start_date = datetime.strptime(request.form['production_start_date'], '%Y-%m-%d').date()
+        completed_item.production_completion_date = datetime.strptime(request.form['production_completion_date'], '%Y-%m-%d').date()
+        completed_item.assembled_by_team_id = request.form['assembled_by_team_id']
+        completed_item.assembled_in_hall_id = request.form['assembled_in_hall_id']
+        completed_item.final_area_id = request.form['final_area_id']
+        completed_item.quantity_produced = request.form['quantity_produced']
+        completed_item.notes = request.form.get('notes', '')
+        completed_item.updated_at = datetime.now().date()
+        db.session.commit()
+        flash('Готовое изделие обновлено успешно!', 'success')
+        return redirect(url_for('main.completed_items'))
+    
+    items = Item.query.all()
+    teams = WorkTeam.query.all()
+    halls = ProductionHall.query.all()
+    areas = ProductionArea.query.all()
+    return render_template('completed_items/edit.html', completed_item=completed_item, items=items, teams=teams, halls=halls, areas=areas)
+
+@main.route('/completed_items/delete/<int:id>')
+def delete_completed_item(id):
+    completed_item = CompletedItem.query.get_or_404(id)
+    db.session.delete(completed_item)
+    db.session.commit()
+    flash('Готовое изделие удалено!', 'success')
+    return redirect(url_for('main.completed_items'))

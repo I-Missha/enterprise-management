@@ -61,9 +61,7 @@
                 </div>
             </div>
         </a>
-    </div>
-
-    <!-- Изделия -->
+    </div>    <!-- Изделия -->
     <div class="col-md-6 col-lg-4">
         <a href="{{ url_for('main.items') }}" class="text-decoration-none">
             <div class="card dashboard-card h-100">
@@ -74,7 +72,20 @@
                 </div>
             </div>
         </a>
-    </div>    <!-- Лаборатории -->
+    </div>
+
+    <!-- Готовые изделия -->
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ url_for('main.completed_items') }}" class="text-decoration-none">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <i class="fas fa-check-circle"></i>
+                    <h5 class="card-title">Готовые изделия</h5>
+                    <p class="card-text">Завершенные и готовые к отгрузке изделия</p>
+                </div>
+            </div>
+        </a>
+    </div><!-- Лаборатории -->
     <div class="col-md-6 col-lg-4">
         <a href="{{ url_for('main.laboratories') }}" class="text-decoration-none">
             <div class="card dashboard-card h-100">
