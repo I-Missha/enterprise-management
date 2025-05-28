@@ -355,6 +355,50 @@ def delete_laboratory(id):
     flash('Лаборатория удалена!', 'success')
     return redirect(url_for('main.laboratories'))
 
+# Маршруты для лабораторного оборудования
+@main.route('/equipment')
+def equipment():
+    equipment_list = db.session.query(LabEquip, TestingLaboratory).join(
+        TestingLaboratory, LabEquip.lab_id == TestingLaboratory.id
+    ).all()
+    return render_template('equipment/simple.html', equipment_list=equipment_list)
+
+@main.route('/equipment/add', methods=['GET', 'POST'])
+def add_equipment():
+    if request.method == 'POST':
+        name = request.form['name']
+        lab_id = request.form['lab_id']
+        
+        equipment = LabEquip(name=name, lab_id=lab_id)
+        db.session.add(equipment)
+        db.session.commit()
+        flash('Оборудование добавлено успешно!', 'success')
+        return redirect(url_for('main.equipment'))
+    
+    laboratories = TestingLaboratory.query.all()
+    return render_template('equipment/add.html', laboratories=laboratories)
+
+@main.route('/equipment/edit/<int:id>', methods=['GET', 'POST'])
+def edit_equipment(id):
+    equipment = LabEquip.query.get_or_404(id)
+    if request.method == 'POST':
+        equipment.name = request.form['name']
+        equipment.lab_id = request.form['lab_id']
+        db.session.commit()
+        flash('Оборудование обновлено успешно!', 'success')
+        return redirect(url_for('main.equipment'))
+    
+    laboratories = TestingLaboratory.query.all()
+    return render_template('equipment/edit.html', equipment=equipment, laboratories=laboratories)
+
+@main.route('/equipment/delete/<int:id>')
+def delete_equipment(id):
+    equipment = LabEquip.query.get_or_404(id)
+    db.session.delete(equipment)
+    db.session.commit()
+    flash('Оборудование удалено!', 'success')
+    return redirect(url_for('main.equipment'))
+
 # Маршруты для рабочих бригад
 @main.route('/teams')
 def teams():

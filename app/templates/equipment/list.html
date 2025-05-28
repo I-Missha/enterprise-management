@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Лабораторное оборудование{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-microscope"></i> Лабораторное оборудование
+    </h2>
+    <a href="{{ url_for('main.add_equipment') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Добавить оборудование
+    </a>
+</div>
+
+{% if equipment_list %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Название оборудования</th>
+                        <th>Лаборатория</th>
+                        <th class="text-center">Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for equipment, laboratory in equipment_list %}
+                    <tr>
+                        <td>{{ equipment.id }}</td>
+                        <td>
+                            <i class="fas fa-microscope me-2"></i>
+                            {{ equipment.name }}
+                        </td>
+                        <td>
+                            <i class="fas fa-flask me-2"></i>
+                            {{ laboratory.name }}
+                        </td>
+                        <td class="text-center">
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('main.edit_equipment', id=equipment.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i> Редактировать
+                                </a>
+                                <a href="{{ url_for('main.delete_equipment', id=equipment.id) }}" 
+                                   class="btn btn-sm btn-outline-danger"
+                                   onclick="return confirm('Вы уверены, что хотите удалить это оборудование?')">
+                                    <i class="fas fa-trash"></i> Удалить
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info text-center">
+    <i class="fas fa-info-circle"></i>
+    <h5>Оборудование не найдено</h5>
+    <p>В системе еще нет зарегистрированного лабораторного оборудования.</p>
+    <a href="{{ url_for('main.add_equipment') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Добавить первое оборудование
+    </a>
+</div>
+{% endif %}
+{% endblock %}

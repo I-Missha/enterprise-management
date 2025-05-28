@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Лабораторное оборудование{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-microscope"></i> Лабораторное оборудование
+    </h2>
+    <a href="{{ url_for('main.add_equipment') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Добавить оборудование
+    </a>
+</div>
+
+<div class="alert alert-info">
+    <p>Найдено оборудования: {{ equipment_list|length }}</p>
+</div>
+
+{% for equipment, laboratory in equipment_list %}
+<div class="card mb-2">
+    <div class="card-body">
+        <h5>{{ equipment.name }}</h5>
+        <p>Лаборатория: {{ laboratory.name }}</p>
+    </div>
+</div>
+{% endfor %}
+
+{% if not equipment_list %}
+<div class="alert alert-warning">
+    Оборудование не найдено
+</div>
+{% endif %}
+
+{% endblock %}

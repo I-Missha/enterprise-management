@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Добавить оборудование{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-plus"></i> Добавить новое лабораторное оборудование
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Название оборудования <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" required 
+                               placeholder="Введите название оборудования">
+                        <div class="form-text">Укажите полное название лабораторного оборудования</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="lab_id" class="form-label">Лаборатория <span class="text-danger">*</span></label>
+                        <select class="form-select" id="lab_id" name="lab_id" required>
+                            <option value="">Выберите лабораторию</option>
+                            {% for laboratory in laboratories %}
+                            <option value="{{ laboratory.id }}">
+                                {{ laboratory.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Выберите лабораторию, в которой будет размещено оборудование</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('main.equipment') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Сохранить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
