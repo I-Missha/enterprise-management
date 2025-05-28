@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Добавить рабочего{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-plus"></i> Добавить нового рабочего
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="employee_id" class="form-label">Сотрудник <span class="text-danger">*</span></label>
+                                <select class="form-select" id="employee_id" name="employee_id" required>
+                                    <option value="">Выберите сотрудника</option>
+                                    {% for employee in employees %}
+                                    <option value="{{ employee.id }}">{{ employee.name }} (ID: {{ employee.id }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Категория <span class="text-danger">*</span></label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Выберите категорию</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.value }}">
+                                        {% if category.value == 'assembler' %}Сборщик
+                                        {% elif category.value == 'turner' %}Токарь
+                                        {% elif category.value == 'locksmith' %}Слесарь
+                                        {% elif category.value == 'welder' %}Сварщик
+                                        {% else %}{{ category.value }}
+                                        {% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="hall_id" class="form-label">Цех <span class="text-danger">*</span></label>
+                                <select class="form-select" id="hall_id" name="hall_id" required>
+                                    <option value="">Выберите цех</option>
+                                    {% for hall in halls %}
+                                    <option value="{{ hall.id }}">{{ hall.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="area_id" class="form-label">Участок <span class="text-danger">*</span></label>
+                                <select class="form-select" id="area_id" name="area_id" required>
+                                    <option value="">Выберите участок</option>
+                                    {% for area in areas %}
+                                    <option value="{{ area.id }}" data-hall="{{ area.hall_id }}">{{ area.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="work_team_id" class="form-label">Бригада <span class="text-danger">*</span></label>
+                                <select class="form-select" id="work_team_id" name="work_team_id" required>
+                                    <option value="">Выберите бригаду</option>
+                                    {% for team in teams %}
+                                    <option value="{{ team.id }}" data-area="{{ team.area_id }}">{{ team.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('main.workers') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Сохранить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

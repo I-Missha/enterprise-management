@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Запросы из задания{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-search"></i> Запросы из задания</h2>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-industry"></i> Производство и изделия
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('main.items_by_hall') }}" class="list-group-item list-group-item-action">
+                        <strong>1.</strong> Виды изделий по цехам и категориям
+                    </a>
+                    <a href="{{ url_for('main.items_by_period') }}" class="list-group-item list-group-item-action">
+                        <strong>2.</strong> Изделия за период времени
+                    </a>
+                    <a href="{{ url_for('main.current_items') }}" class="list-group-item list-group-item-action">
+                        <strong>8.</strong> Изделия в процессе сборки
+                    </a>
+                    <a href="{{ url_for('main.current_items') }}" class="list-group-item list-group-item-action">
+                        <strong>14.</strong> Количество изделий в сборке
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-users"></i> Персонал и управление
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('main.personnel_by_hall') }}" class="list-group-item list-group-item-action">
+                        <strong>3.</strong> Кадровый состав по цехам
+                    </a>
+                    <a href="{{ url_for('main.areas_and_bosses') }}" class="list-group-item list-group-item-action">
+                        <strong>4.</strong> Участки и их начальники
+                    </a>
+                    <a href="{{ url_for('main.masters') }}" class="list-group-item list-group-item-action">
+                        <strong>7.</strong> Мастера участков и цехов
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-tools"></i> Работы и бригады
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('main.item_work_types') }}" class="list-group-item list-group-item-action">
+                        <strong>5.</strong> Работы для изделия
+                    </a>
+                    <a href="{{ url_for('main.teams_composition') }}" class="list-group-item list-group-item-action">
+                        <strong>6.</strong> Состав бригад
+                    </a>
+                    <a href="{{ url_for('main.item_teams') }}" class="list-group-item list-group-item-action">
+                        <strong>9.</strong> Бригады для изделия
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-flask"></i> Испытания и лаборатории
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a href="{{ url_for('main.item_laboratories') }}" class="list-group-item list-group-item-action">
+                        <strong>10.</strong> Лаборатории для изделия
+                    </a>
+                    <a href="{{ url_for('main.lab_tested_items') }}" class="list-group-item list-group-item-action">
+                        <strong>11.</strong> Изделия в лаборатории за период
+                    </a>
+                    <a href="{{ url_for('main.lab_testers') }}" class="list-group-item list-group-item-action">
+                        <strong>12.</strong> Испытатели в лаборатории
+                    </a>
+                    <a href="{{ url_for('main.lab_equipment_usage') }}" class="list-group-item list-group-item-action">
+                        <strong>13.</strong> Оборудование в испытаниях
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info mt-4">
+    <h6><i class="fas fa-info-circle"></i> Описание запросов:</h6>
+    <p class="mb-0">
+        Все запросы реализованы согласно техническому заданию. Каждый запрос позволяет фильтровать данные 
+        по различным критериям: цехам, участкам, категориям, временным периодам и другим параметрам.
+    </p>
+</div>
+{% endblock %}

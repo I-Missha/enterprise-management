@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Управление предприятием{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-4 text-center mb-4">Система управления предприятием</h1>
+        <p class="lead text-center text-muted">Комплексное решение для управления производственными процессами</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Производственные цеха -->
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ url_for('main.halls') }}" class="text-decoration-none">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <i class="fas fa-industry"></i>
+                    <h5 class="card-title">Производственные цеха</h5>
+                    <p class="card-text">Управление цехами и производственными площадками</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Участки -->
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ url_for('main.areas') }}" class="text-decoration-none">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <h5 class="card-title">Производственные участки</h5>
+                    <p class="card-text">Организация работы производственных участков</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Персонал -->
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ url_for('main.employees') }}" class="text-decoration-none">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <i class="fas fa-users"></i>
+                    <h5 class="card-title">Персонал</h5>
+                    <p class="card-text">Управление сотрудниками, рабочими и инженерами</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Рабочие бригады -->
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ url_for('main.teams') }}" class="text-decoration-none">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <i class="fas fa-user-friends"></i>
+                    <h5 class="card-title">Рабочие бригады</h5>
+                    <p class="card-text">Организация и управление рабочими бригадами</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Изделия -->
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ url_for('main.items') }}" class="text-decoration-none">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <i class="fas fa-cogs"></i>
+                    <h5 class="card-title">Изделия</h5>
+                    <p class="card-text">Учет и контроль производимых изделий</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Лаборатории -->
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ url_for('main.laboratories') }}" class="text-decoration-none">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <i class="fas fa-flask"></i>
+                    <h5 class="card-title">Испытательные лаборатории</h5>
+                    <p class="card-text">Управление лабораториями и испытательным оборудованием</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line"></i> Быстрые отчеты
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <a href="{{ url_for('main.reports') }}" class="btn btn-outline-primary btn-lg w-100 mb-3">
+                            <i class="fas fa-chart-bar"></i> Производственная сводка
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{{ url_for('main.reports') }}" class="btn btn-outline-success btn-lg w-100 mb-3">
+                            <i class="fas fa-tasks"></i> Статус изделий
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

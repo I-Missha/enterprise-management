@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+
+{% block title %}Lab Testers by Period{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Lab Testers by Period</h2>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Filter Options</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-2">
+                    <label for="lab_id" class="form-label">Laboratory</label>
+                    <select name="lab_id" id="lab_id" class="form-select">
+                        <option value="">All Labs</option>
+                        {% for lab in laboratories %}
+                        <option value="{{ lab.id }}" {% if selected_lab == lab.id %}selected{% endif %}>
+                            {{ lab.lab_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="item_id" class="form-label">Item</label>
+                    <select name="item_id" id="item_id" class="form-select">
+                        <option value="">All Items</option>
+                        {% for item in items %}
+                        <option value="{{ item.id }}" {% if selected_item == item.id %}selected{% endif %}>
+                            {{ item.item_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="category_id" class="form-label">Category</label>
+                    <select name="category_id" id="category_id" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if selected_category == category.id %}selected{% endif %}>
+                            {{ category.category_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="start_date" class="form-label">Start Date</label>
+                    <input type="date" name="start_date" id="start_date" class="form-control" value="{{ start_date or '' }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="end_date" class="form-label">End Date</label>
+                    <input type="date" name="end_date" id="end_date" class="form-control" value="{{ end_date or '' }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary" style="margin-top: 31px;">Apply Filter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="alert alert-info">
+                <strong>Total Active Testers: {{ testers|length }}</strong>
+                {% if start_date or end_date %}
+                <span class="ms-3">
+                    Period: 
+                    {% if start_date %}{{ start_date }}{% else %}Beginning{% endif %}
+                    to 
+                    {% if end_date %}{{ end_date }}{% else %}Present{% endif %}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if testers %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Tester</th>
+                    <th>Position</th>
+                    <th>Laboratory</th>
+                    <th>Lab Type</th>
+                    <th>Items Tested</th>
+                    <th>Test Count</th>
+                    <th>Success Rate</th>
+                    <th>Last Test Date</th>
+                    <th>Experience</th>
+                    <th>Contact</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tester_data in testers %}
+                <tr>
+                    <td>
+                        <strong>{{ tester_data.Employee.first_name }} {{ tester_data.Employee.last_name }}</strong>
+                        <br><small class="text-muted">ID: {{ tester_data.Employee.employee_id }}</small>
+                    </td>
+                    <td>
+                        <span class="badge bg-primary">{{ tester_data.Employee.position or 'Tester' }}</span>
+                        {% if tester_data.Employee.department %}
+                        <br><small class="text-muted">{{ tester_data.Employee.department }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <strong>{{ tester_data.TestingLaboratory.lab_name }}</strong>
+                        <br><small class="text-muted">ID: {{ tester_data.TestingLaboratory.id }}</small>
+                    </td>
+                    <td>
+                        {% if tester_data.TestingLaboratory.lab_type %}
+                        <span class="badge bg-info">{{ tester_data.TestingLaboratory.lab_type }}</span>
+                        {% else %}
+                        <span class="text-muted">Not specified</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% set unique_items = [] %}
+                        {% for test in tester_data.tests %}
+                            {% if test.Item.item_name not in unique_items %}
+                                {% set _ = unique_items.append(test.Item.item_name) %}
+                            {% endif %}
+                        {% endfor %}
+                        <span class="badge bg-success">{{ unique_items|length }} unique items</span>
+                        {% if unique_items|length > 0 %}
+                        <br><small class="text-muted">{{ unique_items[:3]|join(', ') }}{% if unique_items|length > 3 %}...{% endif %}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge bg-warning">{{ tester_data.tests|length }} tests</span>
+                    </td>
+                    <td>
+                        {% set passed_tests = tester_data.tests|selectattr('test_result')|selectattr('test_result', 'in', ['pass', 'passed', 'success'])|list %}
+                        {% set total_tests = tester_data.tests|selectattr('test_result')|list %}
+                        {% if total_tests|length > 0 %}
+                            {% set success_rate = (passed_tests|length / total_tests|length * 100)|round|int %}
+                            {% if success_rate >= 90 %}
+                            <span class="badge bg-success">{{ success_rate }}%</span>
+                            {% elif success_rate >= 70 %}
+                            <span class="badge bg-warning">{{ success_rate }}%</span>
+                            {% else %}
+                            <span class="badge bg-danger">{{ success_rate }}%</span>
+                            {% endif %}
+                        {% else %}
+                        <span class="text-muted">N/A</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if tester_data.tests %}
+                            {% set latest_test = tester_data.tests|sort(attribute='test_date', reverse=true)|first %}
+                            {{ latest_test.test_date.strftime('%Y-%m-%d') }}
+                            <br><small class="text-muted">{{ latest_test.test_date.strftime('%H:%M') }}</small>
+                        {% else %}
+                        <span class="text-muted">No tests</span>
+                        {% endif %}
+                    </td>                    <td>
+                        {% if tester_data.Employee.hire_date %}
+                            {% set hire_date = tester_data.Employee.hire_date %}
+                            <span class="badge bg-dark">Experience since {{ hire_date.strftime('%Y') }}</span>
+                        {% else %}
+                        <span class="text-muted">Unknown</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if tester_data.Employee.email %}
+                        <a href="mailto:{{ tester_data.Employee.email }}" class="text-decoration-none">
+                            {{ tester_data.Employee.email }}
+                        </a>
+                        {% endif %}
+                        {% if tester_data.Employee.phone %}
+                        <br><small class="text-muted">{{ tester_data.Employee.phone }}</small>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h6>Testers by Laboratory</h6>
+                </div>
+                <div class="card-body">
+                    {% set lab_testers = {} %}
+                    {% for tester_data in testers %}
+                        {% if tester_data.TestingLaboratory.lab_name not in lab_testers %}
+                            {% set _ = lab_testers.update({tester_data.TestingLaboratory.lab_name: 0}) %}
+                        {% endif %}
+                        {% set _ = lab_testers.update({tester_data.TestingLaboratory.lab_name: lab_testers[tester_data.TestingLaboratory.lab_name] + 1}) %}
+                    {% endfor %}
+                    
+                    <ul class="list-group list-group-flush">
+                        {% for lab, count in lab_testers.items() %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ lab }}
+                            <span class="badge bg-primary rounded-pill">{{ count }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h6>Test Performance</h6>
+                </div>
+                <div class="card-body">
+                    {% set high_performers = 0 %}
+                    {% set medium_performers = 0 %}
+                    {% set low_performers = 0 %}
+                    {% for tester_data in testers %}
+                        {% set passed_tests = tester_data.tests|selectattr('test_result')|selectattr('test_result', 'in', ['pass', 'passed', 'success'])|list %}
+                        {% set total_tests = tester_data.tests|selectattr('test_result')|list %}
+                        {% if total_tests|length > 0 %}
+                            {% set success_rate = (passed_tests|length / total_tests|length * 100)|round|int %}
+                            {% if success_rate >= 90 %}
+                                {% set high_performers = high_performers + 1 %}
+                            {% elif success_rate >= 70 %}
+                                {% set medium_performers = medium_performers + 1 %}
+                            {% else %}
+                                {% set low_performers = low_performers + 1 %}
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            High Performers (90%+)
+                            <span class="badge bg-success rounded-pill">{{ high_performers }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Medium Performers (70-89%)
+                            <span class="badge bg-warning rounded-pill">{{ medium_performers }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Low Performers (<70%)
+                            <span class="badge bg-danger rounded-pill">{{ low_performers }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h6>Testing Activity</h6>
+                </div>
+                <div class="card-body">
+                    {% set total_tests = 0 %}
+                    {% set active_testers = 0 %}
+                    {% for tester_data in testers %}
+                        {% set _ = total_tests + tester_data.tests|length %}
+                        {% if tester_data.tests|length > 0 %}
+                            {% set active_testers = active_testers + 1 %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Total Tests
+                            <span class="badge bg-primary rounded-pill">{{ total_tests }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Active Testers
+                            <span class="badge bg-success rounded-pill">{{ active_testers }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Avg Tests per Tester
+                            <span class="badge bg-info rounded-pill">{{ (total_tests / testers|length)|round|int if testers|length > 0 else 0 }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h6>Tester Positions</h6>
+                </div>
+                <div class="card-body">
+                    {% set positions = {} %}
+                    {% for tester_data in testers %}
+                        {% set position = tester_data.Employee.position or 'Tester' %}
+                        {% if position not in positions %}
+                            {% set _ = positions.update({position: 0}) %}
+                        {% endif %}
+                        {% set _ = positions.update({position: positions[position] + 1}) %}
+                    {% endfor %}
+                    
+                    <ul class="list-group list-group-flush">
+                        {% for position, count in positions.items() %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ position }}
+                            <span class="badge bg-secondary rounded-pill">{{ count }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <h5>No testers found</h5>
+        <p>No testers were active in the specified period matching the filter criteria.</p>
+    </div>
+    {% endif %}
+
+    <div class="mt-3">
+        <a href="{{ url_for('main.queries') }}" class="btn btn-secondary">Back to Queries</a>
+    </div>
+</div>
+{% endblock %}

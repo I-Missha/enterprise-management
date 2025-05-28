@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Редактировать изделие{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-edit"></i> Редактировать изделие
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Название изделия <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ item.name }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="type_id" class="form-label">Тип изделия <span class="text-danger">*</span></label>
+                                <select class="form-select" id="type_id" name="type_id" required>
+                                    <option value="">Выберите тип</option>
+                                    {% for type in types %}
+                                    <option value="{{ type.id }}" {% if type.id == item.type_id %}selected{% endif %}>{{ type.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="hall_id" class="form-label">Цех <span class="text-danger">*</span></label>
+                                <select class="form-select" id="hall_id" name="hall_id" required>
+                                    <option value="">Выберите цех</option>
+                                    {% for hall in halls %}
+                                    <option value="{{ hall.id }}" {% if hall.id == item.hall_id %}selected{% endif %}>{{ hall.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Статус <span class="text-danger">*</span></label>
+                                <select class="form-select" id="status" name="status" required>
+                                    <option value="">Выберите статус</option>
+                                    {% for status in statuses %}
+                                    <option value="{{ status.value }}" {% if status.value == item.status.value %}selected{% endif %}>
+                                        {% if status.value == 'in_progress' %}В процессе
+                                        {% elif status.value == 'testing' %}На испытаниях
+                                        {% elif status.value == 'completed' %}Завершено
+                                        {% else %}{{ status.value }}
+                                        {% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('main.items') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Сохранить изменения
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

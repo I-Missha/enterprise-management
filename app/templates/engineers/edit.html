@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Редактировать инженера{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-edit"></i> Редактировать инженера
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="employee_id" class="form-label">Сотрудник <span class="text-danger">*</span></label>
+                                <select class="form-select" id="employee_id" name="employee_id" required>
+                                    <option value="">Выберите сотрудника</option>
+                                    {% for employee in employees %}
+                                    <option value="{{ employee.id }}" {% if employee.id == engineer.employee_id %}selected{% endif %}>
+                                        {{ employee.name }} (ID: {{ employee.id }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="category_id" class="form-label">Категория <span class="text-danger">*</span></label>
+                                <select class="form-select" id="category_id" name="category_id" required>
+                                    <option value="">Выберите категорию</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if category.id == engineer.category_id %}selected{% endif %}>
+                                        {% if category.name.value == 'engineer' %}Инженер
+                                        {% elif category.name.value == 'technologist' %}Технолог
+                                        {% elif category.name.value == 'technician' %}Техник
+                                        {% else %}{{ category.attribute or category.name.value }}
+                                        {% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="hall_id" class="form-label">Цех <span class="text-danger">*</span></label>
+                                <select class="form-select" id="hall_id" name="hall_id" required>
+                                    <option value="">Выберите цех</option>
+                                    {% for hall in halls %}
+                                    <option value="{{ hall.id }}" {% if hall.id == engineer.hall_id %}selected{% endif %}>{{ hall.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="area_id" class="form-label">Участок <span class="text-danger">*</span></label>
+                                <select class="form-select" id="area_id" name="area_id" required>
+                                    <option value="">Выберите участок</option>
+                                    {% for area in areas %}
+                                    <option value="{{ area.id }}" data-hall="{{ area.hall_id }}" {% if area.id == engineer.area_id %}selected{% endif %}>{{ area.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('main.engineers') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Сохранить изменения
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Cascading dropdown for hall -> area
+    document.getElementById('hall_id').addEventListener('change', function() {
+        const hallId = this.value;
+        const areaSelect = document.getElementById('area_id');
+        
+        // Reset area dropdown
+        areaSelect.innerHTML = '<option value="">Выберите участок</option>';
+        
+        if (hallId) {
+            // Use API endpoint to get areas for selected hall
+            fetch(`/api/areas/${hallId}`)
+                .then(response => response.json())
+                .then(areas => {
+                    areas.forEach(area => {
+                        const option = document.createElement('option');
+                        option.value = area.id;
+                        option.textContent = area.name;
+                        areaSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching areas:', error);
+                });
+        }
+    });
+</script>
+{% endblock %}

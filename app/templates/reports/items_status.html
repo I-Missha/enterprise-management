@@ -1,0 +1,258 @@
+{% extends "base.html" %}
+
+{% block title %}Отчет по статусам изделий{% endblock %}
+
+{% block content %}
+<!-- Подсчет общей статистики в начале -->
+{% set total_items = 0 %}
+{% set in_progress = 0 %}
+{% set testing = 0 %}
+{% set completed = 0 %}
+{% for hall_name, status, count in items_by_hall %}
+    {% set total_items = total_items + count %}
+    {% if status.value == 'in_progress' %}
+        {% set in_progress = in_progress + count %}
+    {% elif status.value == 'testing' %}
+        {% set testing = testing + count %}
+    {% elif status.value == 'completed' %}
+        {% set completed = completed + count %}
+    {% endif %}
+{% endfor %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-flask"></i> Отчет по статусам изделий</h2>
+    <a href="{{ url_for('main.reports') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Назад к отчетам
+    </a>
+</div>
+
+<!-- Сводная статистика -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-tasks fa-2x text-primary mb-2"></i>
+                <h3 class="card-title">{{ total_items }}</h3>
+                <p class="card-text">Всего изделий</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-play fa-2x text-warning mb-2"></i>
+                <h3 class="card-title">{{ in_progress }}</h3>
+                <p class="card-text">В процессе</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-vial fa-2x text-info mb-2"></i>
+                <h3 class="card-title">{{ testing }}</h3>                <p class="card-text">На испытаниях</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                <h3 class="card-title">{{ completed }}</h3>
+                <p class="card-text">Завершено</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Статистика по цехам и статусам -->
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar"></i> Статусы изделий по цехам
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if items_by_hall %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Цех</th>
+                                    <th>Статус</th>
+                                    <th>Количество</th>
+                                    <th>Процент от общего</th>
+                                </tr>
+                            </thead>                            <tbody>
+                                {% for hall_name, status, count in items_by_hall %}
+                                <tr>
+                                    <td>{{ hall_name }}</td>
+                                    <td>
+                                        {% if status.value == 'in_progress' %}
+                                            <span class="badge bg-warning">В процессе</span>
+                                        {% elif status.value == 'testing' %}
+                                            <span class="badge bg-info">На испытаниях</span>
+                                        {% elif status.value == 'completed' %}
+                                            <span class="badge bg-success">Завершено</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ status.value }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><strong>{{ count }}</strong></td>                                    <td>
+                                        {% if total_items > 0 %}
+                                            <div class="progress" style="width: 100px;">
+                                                {% set progress_class = "bg-secondary" %}
+                                                {% if status.value == 'in_progress' %}
+                                                    {% set progress_class = "bg-warning" %}
+                                                {% elif status.value == 'testing' %}
+                                                    {% set progress_class = "bg-info" %}
+                                                {% elif status.value == 'completed' %}
+                                                    {% set progress_class = "bg-success" %}
+                                                {% endif %}
+                                                <div class="progress-bar {{ progress_class }}"
+                                                    role="progressbar"
+                                                    style="width: {{ (count / total_items * 100)|round(1) }}%"
+                                                    aria-valuenow="{{ (count / total_items * 100)|round(1) }}"
+                                                    aria-valuemin="0"
+                                                    aria-valuemax="100">
+                                                    {{ (count / total_items * 100)|round(1) }}%
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">Нет данных об изделиях</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Последние обновления -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock"></i> Последние изделия
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_items %}
+                    <div class="list-group list-group-flush">
+                        {% for item, type_item, hall in recent_items %}
+                        <div class="list-group-item border-0 px-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ item.name }}</h6>
+                                    <p class="mb-1 text-muted small">{{ type_item.name }}</p>
+                                    <small class="text-muted">{{ hall.name }}</small>
+                                </div>
+                                <span class="badge {% if item.status.value == 'in_progress' %}bg-warning
+                                                  {% elif item.status.value == 'testing' %}bg-info
+                                                  {% elif item.status.value == 'completed' %}bg-success
+                                                  {% else %}bg-secondary{% endif %}">
+                                    {% if item.status.value == 'in_progress' %}В процессе
+                                    {% elif item.status.value == 'testing' %}На испытаниях
+                                    {% elif item.status.value == 'completed' %}Завершено
+                                    {% else %}{{ item.status.value }}{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Нет данных об изделиях</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Диаграмма статусов -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie"></i> Общее распределение по статусам
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <h4 class="text-warning">
+                                {% if total_items > 0 %}
+                                    {{ (in_progress / total_items * 100)|round(1) }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </h4>
+                            <p class="text-muted mb-0">В процессе производства</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <h4 class="text-info">
+                                {% if total_items > 0 %}
+                                    {{ (testing / total_items * 100)|round(1) }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </h4>
+                            <p class="text-muted mb-0">На стадии испытаний</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3">
+                            <h4 class="text-success">
+                                {% if total_items > 0 %}
+                                    {{ (completed / total_items * 100)|round(1) }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </h4>
+                            <p class="text-muted mb-0">Готовые изделия</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Экспорт данных -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-download"></i> Экспорт данных
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Экспорт отчета по статусам изделий в различных форматах</p>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-success" onclick="window.print()">
+                        <i class="fas fa-print"></i> Печать
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" disabled>
+                        <i class="fas fa-file-excel"></i> Excel
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" disabled>
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

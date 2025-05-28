@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Состав бригад{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-users"></i> Состав бригад</h2>
+    <a href="{{ url_for('main.queries') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Назад к запросам
+    </a>
+</div>
+
+<!-- Фильтры -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-filter"></i> Фильтры</h5>
+    </div>
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-5">
+                <label for="hall_id" class="form-label">Цех</label>
+                <select class="form-control" id="hall_id" name="hall_id">
+                    <option value="">Все цеха</option>
+                    {% for hall in halls %}
+                    <option value="{{ hall.id }}" {% if selected_hall == hall.id %}selected{% endif %}>
+                        {{ hall.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label for="area_id" class="form-label">Участок</label>
+                <select class="form-control" id="area_id" name="area_id">
+                    <option value="">Все участки</option>
+                    {% for area in areas %}
+                    <option value="{{ area.id }}" {% if selected_area == area.id %}selected{% endif %}>
+                        {{ area.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-search"></i> Найти
+                </button>
+                <a href="{{ url_for('main.teams_composition') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Сбросить
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Статистика -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-user-friends fa-2x text-primary mb-2"></i>
+                <h3 class="card-title">{{ teams|length }}</h3>
+                <p class="card-text">Бригад</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-hard-hat fa-2x text-success mb-2"></i>
+                <h3 class="card-title">{{ team_members.values()|map('length')|sum }}</h3>
+                <p class="card-text">Рабочих</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-map-marked-alt fa-2x text-info mb-2"></i>
+                <h3 class="card-title">{{ teams|map(attribute='1')|unique|list|length }}</h3>
+                <p class="card-text">Участков</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-calculator fa-2x text-warning mb-2"></i>
+                <h3 class="card-title">{{ (team_members.values()|map('length')|sum / teams|length)|round(1) if teams else 0 }}</h3>
+                <p class="card-text">Ср. размер</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Результаты -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-list"></i> Состав бригад
+            {% if teams %}
+                <span class="badge bg-primary">{{ teams|length }}</span>
+            {% endif %}
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if teams %}
+            {% for team, area, hall in teams %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h6 class="mb-0">
+                                <i class="fas fa-user-friends"></i> {{ team.name }}
+                                <span class="badge bg-primary ms-2">{{ team_members[team.id]|length }} чел.</span>
+                            </h6>
+                            <small class="text-muted">
+                                <i class="fas fa-map-marked-alt"></i> {{ area.name }} 
+                                <i class="fas fa-industry ms-2"></i> {{ hall.name }}
+                            </small>
+                        </div>
+                        <div class="col-auto">
+                            {% set team_size = team_members[team.id]|length %}
+                            {% if team_size == 0 %}
+                                <span class="badge bg-secondary">Пустая бригада</span>
+                            {% elif team_size <= 3 %}
+                                <span class="badge bg-warning">Малая бригада</span>
+                            {% elif team_size <= 7 %}
+                                <span class="badge bg-success">Оптимальная</span>
+                            {% else %}
+                                <span class="badge bg-info">Большая бригада</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if team_members[team.id] %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>ФИО</th>
+                                        <th>Категория</th>
+                                        <th>Дата приема</th>
+                                        <th>Должность</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for worker, employee in team_members[team.id] %}
+                                    <tr>
+                                        <td>{{ worker.employee_id }}</td>
+                                        <td><strong>{{ employee.name }}</strong></td>
+                                        <td>
+                                            <span class="badge bg-secondary">
+                                                {% if worker.category.value == 'assembler' %}Сборщик
+                                                {% elif worker.category.value == 'turner' %}Токарь
+                                                {% elif worker.category.value == 'locksmith' %}Слесарь
+                                                {% elif worker.category.value == 'welder' %}Сварщик
+                                                {% else %}{{ worker.category.value }}
+                                                {% endif %}
+                                            </span>
+                                        </td>
+                                        <td>{{ employee.hire_date.strftime('%d.%m.%Y') if employee.hire_date else 'Не указано' }}</td>
+                                        <td>{{ employee.current_position or 'Не указано' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3 text-muted">
+                            <i class="fas fa-user-slash"></i> В бригаде нет рабочих
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Бригады не найдены</h5>
+                <p class="text-muted">Попробуйте изменить параметры поиска</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

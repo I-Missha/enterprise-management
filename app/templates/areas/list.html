@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Производственные участки{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-map-marked-alt"></i> Производственные участки</h2>
+    <a href="{{ url_for('main.add_area') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Добавить участок
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if areas %}
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Название участка</th>
+                            <th>Цех</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for area in areas %}
+                        <tr>
+                            <td>{{ area.id }}</td>
+                            <td>{{ area.name }}</td>
+                            <td>{{ area.hall.name if area.hall else '-' }}</td>                            <td>
+                                <a href="{{ url_for('main.edit_area', id=area.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i> Редактировать
+                                </a>
+                                <a href="{{ url_for('main.delete_area', id=area.id) }}" class="btn btn-sm btn-outline-danger" 
+                                   onclick="return confirm('Вы уверены, что хотите удалить этот участок?')">
+                                    <i class="fas fa-trash"></i> Удалить
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-map-marked-alt fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Участки не найдены</h5>
+                <p class="text-muted">Начните с добавления первого участка</p>
+                <a href="{{ url_for('main.add_area') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Добавить участок
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

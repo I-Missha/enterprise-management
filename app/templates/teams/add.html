@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Добавить бригаду{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-plus"></i> Добавить новую бригаду
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Название бригады <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="hall_id" class="form-label">Цех <span class="text-danger">*</span></label>
+                                <select class="form-select" id="hall_id" name="hall_id" required>
+                                    <option value="">Выберите цех</option>
+                                    {% for hall in halls %}
+                                    <option value="{{ hall.id }}">{{ hall.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="area_id" class="form-label">Участок <span class="text-danger">*</span></label>
+                                <select class="form-select" id="area_id" name="area_id" required>
+                                    <option value="">Выберите участок</option>
+                                    {% for area in areas %}
+                                    <option value="{{ area.id }}" data-hall="{{ area.hall_id }}">{{ area.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('main.teams') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Сохранить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Cascading dropdown for hall -> area
+    document.getElementById('hall_id').addEventListener('change', function() {
+        const hallId = this.value;
+        const areaSelect = document.getElementById('area_id');
+        
+        // Reset area dropdown
+        areaSelect.innerHTML = '<option value="">Выберите участок</option>';
+        
+        if (hallId) {
+            // Use API endpoint to get areas for selected hall
+            fetch(`/api/areas/${hallId}`)
+                .then(response => response.json())
+                .then(areas => {
+                    areas.forEach(area => {
+                        const option = document.createElement('option');
+                        option.value = area.id;
+                        option.textContent = area.name;
+                        areaSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching areas:', error);
+                });
+        }
+    });
+</script>
+{% endblock %}

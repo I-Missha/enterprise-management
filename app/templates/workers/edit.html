@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Редактировать рабочего{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-edit"></i> Редактировать рабочего
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="employee_id" class="form-label">Сотрудник <span class="text-danger">*</span></label>
+                                <select class="form-select" id="employee_id" name="employee_id" required>
+                                    <option value="">Выберите сотрудника</option>
+                                    {% for employee in employees %}
+                                    <option value="{{ employee.id }}" {% if employee.id == worker.employee_id %}selected{% endif %}>
+                                        {{ employee.name }} (ID: {{ employee.id }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="category" class="form-label">Категория <span class="text-danger">*</span></label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Выберите категорию</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.value }}" {% if category.value == worker.category.value %}selected{% endif %}>
+                                        {% if category.value == 'assembler' %}Сборщик
+                                        {% elif category.value == 'turner' %}Токарь
+                                        {% elif category.value == 'locksmith' %}Слесарь
+                                        {% elif category.value == 'welder' %}Сварщик
+                                        {% else %}{{ category.value }}
+                                        {% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="hall_id" class="form-label">Цех <span class="text-danger">*</span></label>
+                                <select class="form-select" id="hall_id" name="hall_id" required>
+                                    <option value="">Выберите цех</option>
+                                    {% for hall in halls %}
+                                    <option value="{{ hall.id }}" {% if hall.id == worker.hall_id %}selected{% endif %}>{{ hall.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="area_id" class="form-label">Участок <span class="text-danger">*</span></label>
+                                <select class="form-select" id="area_id" name="area_id" required>
+                                    <option value="">Выберите участок</option>
+                                    {% for area in areas %}
+                                    <option value="{{ area.id }}" data-hall="{{ area.hall_id }}" {% if area.id == worker.area_id %}selected{% endif %}>{{ area.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="work_team_id" class="form-label">Бригада <span class="text-danger">*</span></label>
+                                <select class="form-select" id="work_team_id" name="work_team_id" required>
+                                    <option value="">Выберите бригаду</option>
+                                    {% for team in teams %}
+                                    <option value="{{ team.id }}" data-area="{{ team.area_id }}" {% if team.id == worker.work_team_id %}selected{% endif %}>{{ team.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('main.workers') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Сохранить изменения
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Cascading dropdowns for hall -> area -> team
+    document.getElementById('hall_id').addEventListener('change', function() {
+        const hallId = this.value;
+        const areaSelect = document.getElementById('area_id');
+        const teamSelect = document.getElementById('work_team_id');
+        
+        // Reset dependent dropdowns
+        areaSelect.innerHTML = '<option value="">Выберите участок</option>';
+        teamSelect.innerHTML = '<option value="">Выберите бригаду</option>';
+        
+        if (hallId) {
+            // Use API endpoint to get areas for selected hall
+            fetch(`/api/areas/${hallId}`)
+                .then(response => response.json())
+                .then(areas => {
+                    areas.forEach(area => {
+                        const option = document.createElement('option');
+                        option.value = area.id;
+                        option.textContent = area.name;
+                        areaSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching areas:', error);
+                });
+        }
+    });
+
+    document.getElementById('area_id').addEventListener('change', function() {
+        const areaId = this.value;
+        const teamSelect = document.getElementById('work_team_id');
+        
+        // Reset team dropdown
+        teamSelect.innerHTML = '<option value="">Выберите бригаду</option>';
+        
+        if (areaId) {
+            // Use API endpoint to get teams for selected area
+            fetch(`/api/teams/${areaId}`)
+                .then(response => response.json())
+                .then(teams => {
+                    teams.forEach(team => {
+                        const option = document.createElement('option');
+                        option.value = team.id;
+                        option.textContent = team.name;
+                        teamSelect.appendChild(option);
+                    });
+                })                .catch(error => {
+                    console.error('Error fetching teams:', error);
+                });
+        }
+    });
+</script>
+{% endblock %}
+</script>
+{% endblock %}
