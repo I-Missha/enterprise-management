@@ -49,12 +49,10 @@
                 </div>
             </form>
         </div>
-    </div>
-
-    {% if current_production %}
+    </div>    {% if current_items %}
     <div class="card">
         <div class="card-body">
-            <h5 class="card-title">Изделий в производстве: {{ current_production|length }}</h5>
+            <h5 class="card-title">Изделий в производстве: {{ current_items|length }}</h5>
             <div class="table-responsive">
                 <table class="table table-striped">
                     <thead>
@@ -64,23 +62,22 @@
                             <th>Категория</th>
                             <th>Цех</th>
                             <th>Участок</th>
-                            <th>Бригада</th>
+                            <th>Количество</th>
                             <th>Дата начала</th>
-                            <th>Прогресс</th>
+                            <th>Статус</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for completed_item, item, type_item, category, hall, area, team in current_production %}
-                        <tr>
+                        {% for completed_item, item, type_item, category, hall, area in current_items %}                        <tr>
                             <td>{{ item.name }}</td>
                             <td>{{ type_item.name }}</td>
                             <td>{{ category.name }}</td>
                             <td>{{ hall.name }}</td>
                             <td>{{ area.name }}</td>
-                            <td>{{ team.name if team else '-' }}</td>
-                            <td>{{ completed_item.assembly_start_date.strftime('%d.%m.%Y') if completed_item.assembly_start_date else '-' }}</td>
+                            <td>{{ completed_item.quantity_produced }}</td>
+                            <td>{{ completed_item.production_start_date.strftime('%d.%m.%Y') if completed_item.production_start_date else '-' }}</td>
                             <td>
-                                <span class="badge bg-warning">В производстве</span>
+                                <span class="badge bg-warning">{{ completed_item.status }}</span>
                             </td>
                         </tr>
                         {% endfor %}

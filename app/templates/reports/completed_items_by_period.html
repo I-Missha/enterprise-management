@@ -59,7 +59,7 @@
                             <td>{{ item.name }}</td>
                             <td>{{ type_item.name }}</td>
                             <td>{{ category.name }}</td>
-                            <td>{{ completed_item.production_completion_date.strftime('%d.%m.%Y') }}</td>
+                            <td>{{ completed_item.production_completion_date.strftime('%d.%m.%Y') if completed_item.production_completion_date else '-' }}</td>
                             <td>{{ hall.name }}</td>
                             <td>{{ area.name }}</td>
                         </tr>

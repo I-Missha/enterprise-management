@@ -1124,10 +1124,11 @@ def team_composition():
     """Отчет по составу бригад"""
     area_id = request.args.get('area_id', type=int)
     hall_id = request.args.get('hall_id', type=int)
+    team_id = request.args.get('team_id', type=int)
     
     # Бригады с рабочими
     query = db.session.query(
-        WorkTeam, ProductionArea, ProductionHall, Worker, Employee
+        WorkTeam, Worker, Employee, ProductionHall, ProductionArea
     ).join(
         ProductionArea, WorkTeam.area_id == ProductionArea.id
     ).join(
@@ -1138,18 +1139,21 @@ def team_composition():
         Employee, Worker.employee_id == Employee.id
     )
     
+    if team_id:
+        query = query.filter(WorkTeam.id == team_id)
     if area_id:
         query = query.filter(WorkTeam.area_id == area_id)
     if hall_id:
         query = query.filter(WorkTeam.hall_id == hall_id)
     
-    teams_data = query.all()
+    team_members = query.all()
     areas = ProductionArea.query.all()
     halls = ProductionHall.query.all()
+    teams = WorkTeam.query.all()
     
     return render_template('reports/team_composition.html', 
-                         teams_data=teams_data, areas=areas, halls=halls,
-                         selected_area_id=area_id, selected_hall_id=hall_id)
+                         team_members=team_members, areas=areas, halls=halls, teams=teams,
+                         selected_area_id=area_id, selected_hall_id=hall_id, selected_team_id=team_id)
 
 # 7. Получить список мастеров указанного участка, цеха
 @main.route('/reports/masters')

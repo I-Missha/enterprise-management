@@ -88,7 +88,7 @@ CREATE TABLE "completed_item" (
     "id" SERIAL PRIMARY KEY,
     "item_id" integer NOT NULL,
     "production_start_date" date NOT NULL,
-    "production_completion_date" date NOT NULL,
+    "production_completion_date" date, -- NULL for items still in progress
     "assembled_by_team_id" integer NOT NULL,
     "assembled_in_hall_id" integer NOT NULL,
     "final_area_id" integer NOT NULL,
