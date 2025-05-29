@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Управление назначениями{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>Управление назначениями</h2>
+            <p>Система назначения руководителей и ответственных лиц</p>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-building"></i> Начальники цехов
+                    </h5>
+                    <p class="card-text">Назначение и управление начальниками производственных цехов</p>
+                    <a href="{{ url_for('main.shop_managers') }}" class="btn btn-primary">Управлять</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-cogs"></i> Начальники участков
+                    </h5>
+                    <p class="card-text">Назначение и управление начальниками производственных участков</p>
+                    <a href="{{ url_for('main.area_managers') }}" class="btn btn-primary">Управлять</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-user-tie"></i> Мастера
+                    </h5>
+                    <p class="card-text">Назначение и управление мастерами на участках</p>
+                    <a href="{{ url_for('main.masters_assignments') }}" class="btn btn-primary">Управлять</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-users"></i> Бригадиры
+                    </h5>
+                    <p class="card-text">Назначение и управление бригадирами рабочих бригад</p>
+                    <a href="{{ url_for('main.team_leaders') }}" class="btn btn-primary">Управлять</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h5><i class="fas fa-info-circle"></i> Информация о назначениях</h5>
+                <ul>
+                    <li><strong>Начальники цехов</strong> - инженеры или технологи, назначаемые руководить производственными цехами</li>
+                    <li><strong>Начальники участков</strong> - инженеры или технологи, назначаемые руководить производственными участками</li>
+                    <li><strong>Мастера</strong> - инженеры всех категорий, которые могут быть назначены мастерами на участках</li>
+                    <li><strong>Бригадиры</strong> - рабочие, назначаемые руководителями рабочих бригад</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

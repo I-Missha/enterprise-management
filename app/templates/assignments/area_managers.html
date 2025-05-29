@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Начальники участков{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>Управление начальниками участков</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.assignments') }}">Назначения</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Начальники участков</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Текущие назначения</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Цех</th>
+                                    <th>Участок</th>
+                                    <th>Начальник</th>
+                                    <th>Категория</th>
+                                    <th>Дата найма</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for area, area_boss, engineer, employee, hall in areas %}
+                                <tr>
+                                    <td>{{ hall.name }}</td>
+                                    <td>{{ area.name }}</td>
+                                    <td>
+                                        {% if employee %}
+                                            {{ employee.name }}
+                                        {% else %}
+                                            <span class="text-muted">Не назначен</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if engineer and engineer.category %}
+                                            {% if engineer.category.name.value == 'engineer' %}
+                                                Инженер
+                                            {% elif engineer.category.name.value == 'technologist' %}
+                                                Технолог
+                                            {% elif engineer.category.name.value == 'technician' %}
+                                                Техник
+                                            {% endif %}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if employee %}
+                                            {{ employee.hire_date.strftime('%d.%m.%Y') if employee.hire_date else '-' }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if area_boss %}
+                                            <a href="{{ url_for('main.remove_area_manager', area_id=area.id) }}" 
+                                               class="btn btn-sm btn-danger"
+                                               onclick="return confirm('Снять с должности?')">
+                                                Снять
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Назначить начальника участка</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('main.assign_area_manager') }}">
+                        <div class="mb-3">
+                            <label for="area_id" class="form-label">Участок</label>
+                            <select class="form-select" id="area_id" name="area_id" required>
+                                <option value="">Выберите участок</option>
+                                {% for area, area_boss, engineer, employee, hall in areas %}
+                                    <option value="{{ area.id }}" data-hall="{{ hall.id }}">{{ hall.name }} - {{ area.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="engineer_id" class="form-label">Инженер</label>
+                            <select class="form-select" id="engineer_id" name="engineer_id" required>
+                                <option value="">Выберите инженера</option>
+                                {% for engineer, employee, hall, area in available_engineers %}
+                                    <option value="{{ engineer.employee_id }}" data-area="{{ area.id }}">
+                                        {{ employee.name }} - {{ hall.name }} / {{ area.name }}
+                                        ({% if engineer.category.name.value == 'engineer' %}Инженер{% elif engineer.category.name.value == 'technologist' %}Технолог{% endif %})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Только инженеры и технологи, работающие на выбранном участке</div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Назначить</button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6>Информация</h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text small">
+                        Начальником участка может быть назначен только инженер или технолог, 
+                        который уже работает на данном участке.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('area_id').addEventListener('change', function() {
+    const selectedArea = this.value;
+    const engineerSelect = document.getElementById('engineer_id');
+    const options = engineerSelect.querySelectorAll('option');
+    
+    options.forEach(option => {
+        if (option.value === '') {
+            option.style.display = '';
+            return;
+        }
+        
+        const areaId = option.getAttribute('data-area');
+        option.style.display = (areaId === selectedArea || selectedArea === '') ? '' : 'none';
+    });
+    
+    engineerSelect.value = '';
+});
+</script>
+{% endblock %}

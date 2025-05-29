@@ -1462,3 +1462,260 @@ def current_assembly():
     return render_template('reports/current_assembly.html', 
                          current_assembly=current_assembly, halls=halls, areas=areas, categories=categories,
                          selected_hall_id=hall_id, selected_area_id=area_id, selected_category_id=category_id)
+
+# Маршруты для управления назначениями руководителей
+
+@main.route('/assignments')
+def assignments():
+    """Главная страница управления назначениями"""
+    return render_template('assignments/index.html')
+
+# Назначение начальников цехов (HallBosses)
+@main.route('/assignments/shop_managers')
+def shop_managers():
+    """Список назначений начальников цехов"""
+    halls = db.session.query(ProductionHall, HallBosses, Engineer, Employee).outerjoin(
+        HallBosses, ProductionHall.id == HallBosses.hall_id
+    ).outerjoin(
+        Engineer, HallBosses.engineer_id == Engineer.employee_id
+    ).outerjoin(
+        Employee, Engineer.employee_id == Employee.id
+    ).all()
+    
+    available_engineers = db.session.query(Engineer, Employee, ProductionHall).join(
+        Employee, Engineer.employee_id == Employee.id
+    ).join(
+        ProductionHall, Engineer.hall_id == ProductionHall.id
+    ).filter(Engineer.category_id.in_([1, 2]))  # инженеры и технологи
+    
+    return render_template('assignments/shop_managers.html', 
+                         halls=halls, available_engineers=available_engineers)
+
+@main.route('/assignments/assign_shop_manager', methods=['POST'])
+def assign_shop_manager():
+    """Назначить начальника цеха"""
+    hall_id = request.form.get('hall_id', type=int)
+    engineer_id = request.form.get('engineer_id', type=int)
+    
+    if hall_id and engineer_id:
+        engineer = Engineer.query.get_or_404(engineer_id)
+        
+        # Проверяем, что инженер работает в этом цехе
+        if engineer.hall_id == hall_id:
+            # Проверяем, есть ли уже назначение
+            existing = HallBosses.query.filter_by(hall_id=hall_id).first()
+            if existing:
+                existing.engineer_id = engineer_id
+            else:
+                hall_boss = HallBosses(hall_id=hall_id, engineer_id=engineer_id)
+                db.session.add(hall_boss)
+            
+            db.session.commit()
+            flash('Начальник цеха назначен успешно!', 'success')
+        else:
+            flash('Инженер не работает в данном цехе!', 'error')
+    else:
+        flash('Некорректные данные!', 'error')
+    
+    return redirect(url_for('main.shop_managers'))
+
+@main.route('/assignments/remove_shop_manager/<int:hall_id>')
+def remove_shop_manager(hall_id):
+    """Снять начальника цеха"""
+    hall_boss = HallBosses.query.filter_by(hall_id=hall_id).first()
+    if hall_boss:
+        db.session.delete(hall_boss)
+        db.session.commit()
+        flash('Начальник цеха снят с должности!', 'success')
+    return redirect(url_for('main.shop_managers'))
+
+# Назначение начальников участков (AreaBoss)
+@main.route('/assignments/area_managers')
+def area_managers():
+    """Список назначений начальников участков"""
+    areas = db.session.query(ProductionArea, AreaBoss, Engineer, Employee, ProductionHall).outerjoin(
+        AreaBoss, ProductionArea.id == AreaBoss.area_id
+    ).outerjoin(
+        Engineer, AreaBoss.engineer_id == Engineer.employee_id
+    ).outerjoin(
+        Employee, Engineer.employee_id == Employee.id
+    ).join(
+        ProductionHall, ProductionArea.hall_id == ProductionHall.id
+    ).all()
+    
+    available_engineers = db.session.query(Engineer, Employee, ProductionHall, ProductionArea).join(
+        Employee, Engineer.employee_id == Employee.id
+    ).join(
+        ProductionHall, Engineer.hall_id == ProductionHall.id
+    ).join(
+        ProductionArea, Engineer.area_id == ProductionArea.id
+    ).filter(Engineer.category_id.in_([1, 2]))  # инженеры и технологи
+    
+    return render_template('assignments/area_managers.html', 
+                         areas=areas, available_engineers=available_engineers)
+
+@main.route('/assignments/assign_area_manager', methods=['POST'])
+def assign_area_manager():
+    """Назначить начальника участка"""
+    area_id = request.form.get('area_id', type=int)
+    engineer_id = request.form.get('engineer_id', type=int)
+    
+    if area_id and engineer_id:
+        engineer = Engineer.query.get_or_404(engineer_id)
+        
+        # Проверяем, что инженер работает на этом участке
+        if engineer.area_id == area_id:
+            # Проверяем, есть ли уже назначение
+            existing = AreaBoss.query.filter_by(area_id=area_id).first()
+            if existing:
+                existing.engineer_id = engineer_id
+            else:
+                area_boss = AreaBoss(area_id=area_id, engineer_id=engineer_id)
+                db.session.add(area_boss)
+            
+            db.session.commit()
+            flash('Начальник участка назначен успешно!', 'success')
+        else:
+            flash('Инженер не работает на данном участке!', 'error')
+    else:
+        flash('Некорректные данные!', 'error')
+    
+    return redirect(url_for('main.area_managers'))
+
+@main.route('/assignments/remove_area_manager/<int:area_id>')
+def remove_area_manager(area_id):
+    """Снять начальника участка"""
+    area_boss = AreaBoss.query.filter_by(area_id=area_id).first()
+    if area_boss:
+        db.session.delete(area_boss)
+        db.session.commit()
+        flash('Начальник участка снят с должности!', 'success')
+    return redirect(url_for('main.area_managers'))
+
+# Назначение мастеров (Masters)
+@main.route('/assignments/masters')
+def masters_assignments():
+    """Список назначений мастеров"""
+    masters = db.session.query(Masters, ProductionArea, Engineer, Employee, ProductionHall).join(
+        ProductionArea, Masters.area_id == ProductionArea.id
+    ).join(
+        Engineer, Masters.engineer_id == Engineer.employee_id
+    ).join(
+        Employee, Engineer.employee_id == Employee.id
+    ).join(
+        ProductionHall, ProductionArea.hall_id == ProductionHall.id
+    ).all()
+    
+    areas = ProductionArea.query.all()
+    available_engineers = db.session.query(Engineer, Employee, ProductionArea, ProductionHall).join(
+        Employee, Engineer.employee_id == Employee.id
+    ).join(
+        ProductionArea, Engineer.area_id == ProductionArea.id
+    ).join(
+        ProductionHall, ProductionArea.hall_id == ProductionHall.id
+    ).filter(Engineer.category_id.in_([1, 2, 3]))  # все категории инженеров
+    
+    return render_template('assignments/masters.html', 
+                         masters=masters, areas=areas, available_engineers=available_engineers)
+
+@main.route('/assignments/add_master', methods=['POST'])
+def add_master():
+    """Назначить мастера"""
+    area_id = request.form.get('area_id', type=int)
+    engineer_id = request.form.get('engineer_id', type=int)
+    
+    if area_id and engineer_id:
+        engineer = Engineer.query.get_or_404(engineer_id)
+        
+        # Проверяем, что инженер работает на этом участке
+        if engineer.area_id == area_id:
+            # Проверяем, не является ли уже мастером на этом участке
+            existing = Masters.query.filter_by(area_id=area_id, engineer_id=engineer_id).first()
+            if not existing:
+                master = Masters(area_id=area_id, engineer_id=engineer_id)
+                db.session.add(master)
+                db.session.commit()
+                flash('Мастер назначен успешно!', 'success')
+            else:
+                flash('Этот инженер уже является мастером на данном участке!', 'warning')
+        else:
+            flash('Инженер не работает на данном участке!', 'error')
+    else:
+        flash('Некорректные данные!', 'error')
+    
+    return redirect(url_for('main.masters_assignments'))
+
+@main.route('/assignments/remove_master/<int:master_id>')
+def remove_master(master_id):
+    """Снять мастера"""
+    master = Masters.query.get_or_404(master_id)
+    db.session.delete(master)
+    db.session.commit()
+    flash('Мастер снят с должности!', 'success')
+    return redirect(url_for('main.masters_assignments'))
+
+# Назначение бригадиров (WorkerBoss)
+@main.route('/assignments/team_leaders')
+def team_leaders():
+    """Список назначений бригадиров"""
+    teams = db.session.query(WorkTeam, WorkerBoss, Worker, Employee, ProductionArea, ProductionHall).outerjoin(
+        WorkerBoss, WorkTeam.id == WorkerBoss.worker_id  # Предполагаем связь через work_team_id
+    ).outerjoin(
+        Worker, WorkerBoss.worker_id == Worker.employee_id
+    ).outerjoin(
+        Employee, Worker.employee_id == Employee.id
+    ).join(
+        ProductionArea, WorkTeam.area_id == ProductionArea.id
+    ).join(
+        ProductionHall, WorkTeam.hall_id == ProductionHall.id
+    ).all()
+    
+    available_workers = db.session.query(Worker, Employee, WorkTeam, ProductionArea, ProductionHall).join(
+        Employee, Worker.employee_id == Employee.id
+    ).join(
+        WorkTeam, Worker.work_team_id == WorkTeam.id
+    ).join(
+        ProductionArea, WorkTeam.area_id == ProductionArea.id
+    ).join(
+        ProductionHall, WorkTeam.hall_id == ProductionHall.id
+    )
+    
+    return render_template('assignments/team_leaders.html', 
+                         teams=teams, available_workers=available_workers)
+
+@main.route('/assignments/assign_team_leader', methods=['POST'])
+def assign_team_leader():
+    """Назначить бригадира"""
+    team_id = request.form.get('team_id', type=int)
+    worker_id = request.form.get('worker_id', type=int)
+    
+    if team_id and worker_id:
+        worker = Worker.query.get_or_404(worker_id)
+        
+        # Проверяем, что рабочий состоит в этой бригаде
+        if worker.work_team_id == team_id:
+            # Проверяем, есть ли уже назначение
+            existing = WorkerBoss.query.filter_by(worker_id=worker_id).first()
+            if not existing:
+                worker_boss = WorkerBoss(worker_id=worker_id)
+                db.session.add(worker_boss)
+                db.session.commit()
+                flash('Бригадир назначен успешно!', 'success')
+            else:
+                flash('Этот рабочий уже является бригадиром!', 'warning')
+        else:
+            flash('Рабочий не состоит в данной бригаде!', 'error')
+    else:
+        flash('Некорректные данные!', 'error')
+    
+    return redirect(url_for('main.team_leaders'))
+
+@main.route('/assignments/remove_team_leader/<int:worker_id>')
+def remove_team_leader(worker_id):
+    """Снять бригадира"""
+    worker_boss = WorkerBoss.query.filter_by(worker_id=worker_id).first()
+    if worker_boss:
+        db.session.delete(worker_boss)
+        db.session.commit()
+        flash('Бригадир снят с должности!', 'success')
+    return redirect(url_for('main.team_leaders'))
