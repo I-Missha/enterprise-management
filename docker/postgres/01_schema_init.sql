@@ -39,13 +39,15 @@ CREATE TABLE "testing_laboratory" (
 
 CREATE TABLE "production_hall" (
    "id" SERIAL PRIMARY KEY,
-   "name" varchar(255) NOT NULL
+   "name" varchar(255) NOT NULL,
+   "shop_manager_id" integer -- начальник цеха
 );
 
 CREATE TABLE "production_area" (
     "id" SERIAL PRIMARY KEY,
     "name" varchar(255) NOT NULL,
-    "hall_id" integer NOT NULL
+    "hall_id" integer NOT NULL,
+    "area_manager_id" integer -- начальник участка
 );
 
 CREATE TABLE "category_item" (
@@ -162,9 +164,9 @@ CREATE TABLE "worker_boss" (
 CREATE TABLE "work_team" (
     "id" SERIAL PRIMARY KEY,
     "name" varchar(255) NOT NULL,
---     "worker_boss_id" integer NOT NULL,
     "area_id" integer NOT NULL,
-    "hall_id" integer NOT NULL
+    "hall_id" integer NOT NULL,
+    "team_leader_id" integer -- бригадир
 );
 
 

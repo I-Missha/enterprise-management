@@ -47,11 +47,13 @@ class ProductionHall(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
+    shop_manager_id = db.Column(db.Integer, db.ForeignKey('engineer.employee_id'), nullable=True)
     
     # Связи
     areas = db.relationship('ProductionArea', backref='hall', lazy=True)
     workers = db.relationship('Worker', backref='hall', lazy=True)
     engineers = db.relationship('Engineer', backref='hall', lazy=True)
+    shop_manager = db.relationship('Engineer', foreign_keys=[shop_manager_id], backref='managed_halls', lazy=True)
 
 class ProductionArea(db.Model):
     __tablename__ = 'production_area'
@@ -59,11 +61,13 @@ class ProductionArea(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     hall_id = db.Column(db.Integer, db.ForeignKey('production_hall.id'), nullable=False)
+    area_manager_id = db.Column(db.Integer, db.ForeignKey('engineer.employee_id'), nullable=True)
     
     # Связи
     workers = db.relationship('Worker', backref='area', lazy=True)
     engineers = db.relationship('Engineer', backref='area', lazy=True)
     work_teams = db.relationship('WorkTeam', backref='area', lazy=True)
+    area_manager = db.relationship('Engineer', foreign_keys=[area_manager_id], backref='managed_areas', lazy=True)
 
 class CategoryItem(db.Model):
     __tablename__ = 'category_item'
@@ -145,9 +149,11 @@ class WorkTeam(db.Model):
     name = db.Column(db.String(255), nullable=False)
     area_id = db.Column(db.Integer, db.ForeignKey('production_area.id'), nullable=False)
     hall_id = db.Column(db.Integer, db.ForeignKey('production_hall.id'), nullable=False)
+    team_leader_id = db.Column(db.Integer, db.ForeignKey('worker.employee_id'), nullable=True)
     
     # Связи
     workers = db.relationship('Worker', backref='work_team', lazy=True)
+    team_leader = db.relationship('Worker', foreign_keys=[team_leader_id], backref='led_teams', lazy=True)
 
 class WorkType(db.Model):
     __tablename__ = 'work_type'
