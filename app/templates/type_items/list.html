@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Типы изделий{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2><i class="fas fa-tags"></i> Типы изделий</h2>
+    
+    <div class="row mb-3">
+        <div class="col-12">
+            <a href="{{ url_for('main.add_type_item') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Добавить тип изделия
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if type_items %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Название</th>
+                                <th>Категория</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for type_item, category in type_items %}
+                            <tr>
+                                <td>{{ type_item.id }}</td>
+                                <td>{{ type_item.name }}</td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        {% if category.name.value == 'civil_aircraft' %}Гражданские самолеты
+                                        {% elif category.name.value == 'military_aircraft' %}Военные самолеты
+                                        {% elif category.name.value == 'helicopter' %}Вертолеты
+                                        {% else %}{{ category.name.value }}
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('main.edit_type_item', id=type_item.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form action="{{ url_for('main.delete_type_item', id=type_item.id) }}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                onclick="return confirm('Удалить тип изделия?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                    <h5>Нет типов изделий</h5>
+                    <p class="text-muted">Создайте первый тип изделия для классификации продукции.</p>
+                    <a href="{{ url_for('main.add_type_item') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Добавить первый тип
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

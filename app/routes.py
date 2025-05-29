@@ -449,445 +449,69 @@ def delete_team(id):
     flash('Бригада удалена!', 'success')
     return redirect(url_for('main.teams'))
 
-# API маршруты для динамической загрузки данных
-@main.route('/api/areas/<int:hall_id>')
-def get_areas_by_hall(hall_id):
-    areas = ProductionArea.query.filter_by(hall_id=hall_id).all()
-    return jsonify([{'id': area.id, 'name': area.name} for area in areas])
-
-@main.route('/api/teams/<int:area_id>')
-def get_teams_by_area(area_id):
-    teams = WorkTeam.query.filter_by(area_id=area_id).all()
-    return jsonify([{'id': team.id, 'name': team.name} for team in teams])
-
-# Отчеты
-# Дополнительные запросы из задания
-@main.route('/queries')
-def queries():
-    """Страница со всеми запросами из задания"""
-    return render_template('queries/index.html')
-
-# 1. Получить перечень видов изделий отдельной категории и в целом, собираемых указанным цехом, предприятием
-@main.route('/queries/items_by_hall')
-def items_by_hall():
-    hall_id = request.args.get('hall_id', type=int)
-    category_id = request.args.get('category_id', type=int)
-    
-    query = db.session.query(Item, TypeItem, CategoryItem, ProductionHall).join(
-        TypeItem, Item.type_id == TypeItem.id
-    ).join(
+# Маршруты для типов изделий
+@main.route('/type_items')
+def type_items():
+    type_items = db.session.query(TypeItem, CategoryItem).join(
         CategoryItem, TypeItem.category_id == CategoryItem.id
-    ).join(
-        ProductionHall, Item.hall_id == ProductionHall.id
-    )
+    ).all()
+    return render_template('type_items/list.html', type_items=type_items)
+
+@main.route('/type_items/add', methods=['GET', 'POST'])
+def add_type_item():
+    if request.method == 'POST':
+        name = request.form['name']
+        category_id = request.form['category_id']
+        
+        type_item = TypeItem(
+            name=name,
+            category_id=category_id
+        )
+        
+        try:
+            db.session.add(type_item)
+            db.session.commit()
+            flash('Тип изделия добавлен успешно!', 'success')
+            return redirect(url_for('main.type_items'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Ошибка при добавлении типа изделия: {str(e)}', 'danger')
     
-    if hall_id:
-        query = query.filter(Item.hall_id == hall_id)
-    if category_id:
-        query = query.filter(CategoryItem.id == category_id)
-    
-    items = query.all()
-    halls = ProductionHall.query.all()
     categories = CategoryItem.query.all()
-    
-    return render_template('queries/items_by_hall.html', 
-                         items=items, halls=halls, categories=categories,
-                         selected_hall=hall_id, selected_category=category_id)
+    return render_template('type_items/add.html', categories=categories)
 
-# 2. Получить число и перечень изделий за определенный отрезок времени
-@main.route('/queries/items_by_period')
-def items_by_period():
-    hall_id = request.args.get('hall_id', type=int)
-    area_id = request.args.get('area_id', type=int)
-    category_id = request.args.get('category_id', type=int)
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
+@main.route('/type_items/edit/<int:id>', methods=['GET', 'POST'])
+def edit_type_item(id):
+    type_item = TypeItem.query.get_or_404(id)
     
-    query = db.session.query(CompletedItem, Item, TypeItem, CategoryItem, ProductionHall, ProductionArea).join(
-        Item, CompletedItem.item_id == Item.id
-    ).join(
-        TypeItem, Item.type_id == TypeItem.id
-    ).join(
-        CategoryItem, TypeItem.category_id == CategoryItem.id
-    ).join(
-        ProductionHall, CompletedItem.assembled_in_hall_id == ProductionHall.id
-    ).join(
-        ProductionArea, CompletedItem.final_area_id == ProductionArea.id
-    )
+    if request.method == 'POST':
+        type_item.name = request.form['name']
+        type_item.category_id = request.form['category_id']
+        
+        try:
+            db.session.commit()
+            flash('Тип изделия обновлен успешно!', 'success')
+            return redirect(url_for('main.type_items'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Ошибка при обновлении типа изделия: {str(e)}', 'danger')
     
-    if hall_id:
-        query = query.filter(CompletedItem.assembled_in_hall_id == hall_id)
-    if area_id:
-        query = query.filter(CompletedItem.final_area_id == area_id)
-    if category_id:
-        query = query.filter(CategoryItem.id == category_id)
-    if start_date:
-        query = query.filter(CompletedItem.production_completion_date >= start_date)
-    if end_date:
-        query = query.filter(CompletedItem.production_completion_date <= end_date)
-    
-    completed_items = query.all()
-    halls = ProductionHall.query.all()
-    areas = ProductionArea.query.all()
     categories = CategoryItem.query.all()
-    
-    return render_template('queries/items_by_period.html',
-                         completed_items=completed_items, halls=halls, areas=areas, categories=categories,
-                         selected_hall=hall_id, selected_area=area_id, selected_category=category_id,
-                         start_date=start_date, end_date=end_date)
+    return render_template('type_items/edit.html', type_item=type_item, categories=categories)
 
-# 3. Получить данные о кадровом составе цеха, предприятия в целом
-@main.route('/queries/personnel_by_hall')
-def personnel_by_hall():
-    hall_id = request.args.get('hall_id', type=int)
-    category_type = request.args.get('category_type')  # worker, engineer, all
+@main.route('/type_items/delete/<int:id>', methods=['POST'])
+def delete_type_item(id):
+    type_item = TypeItem.query.get_or_404(id)
     
-    workers_query = db.session.query(Worker, Employee, ProductionHall).join(
-        Employee, Worker.employee_id == Employee.id
-    ).join(
-        ProductionHall, Worker.hall_id == ProductionHall.id
-    )
+    try:
+        db.session.delete(type_item)
+        db.session.commit()
+        flash('Тип изделия удален успешно!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при удалении типа изделия: {str(e)}', 'danger')
     
-    engineers_query = db.session.query(Engineer, Employee, ProductionHall, CategoryEngineer).join(
-        Employee, Engineer.employee_id == Employee.id
-    ).join(
-        ProductionHall, Engineer.hall_id == ProductionHall.id
-    ).join(
-        CategoryEngineer, Engineer.category_id == CategoryEngineer.id
-    )
-    
-    if hall_id:
-        workers_query = workers_query.filter(Worker.hall_id == hall_id)
-        engineers_query = engineers_query.filter(Engineer.hall_id == hall_id)
-    
-    workers = workers_query.all() if category_type != 'engineer' else []
-    engineers = engineers_query.all() if category_type != 'worker' else []
-    
-    halls = ProductionHall.query.all()
-    
-    return render_template('queries/personnel_by_hall.html',
-                         workers=workers, engineers=engineers, halls=halls,
-                         selected_hall=hall_id, category_type=category_type)
-
-# 4. Получить число и перечень участков указанного цеха и их начальников
-@main.route('/queries/areas_and_bosses')
-def areas_and_bosses():
-    hall_id = request.args.get('hall_id', type=int)
-    
-    query = db.session.query(ProductionArea, ProductionHall).join(
-        ProductionHall, ProductionArea.hall_id == ProductionHall.id
-    )
-    
-    if hall_id:
-        query = query.filter(ProductionArea.hall_id == hall_id)
-    
-    areas = query.all()
-    
-    # Получаем начальников участков
-    area_bosses = db.session.query(AreaBoss, ProductionArea, Engineer, Employee).join(
-        ProductionArea, AreaBoss.area_id == ProductionArea.id
-    ).join(
-        Engineer, AreaBoss.engineer_id == Engineer.employee_id
-    ).join(
-        Employee, Engineer.employee_id == Employee.id
-    )
-    
-    if hall_id:
-        area_bosses = area_bosses.filter(ProductionArea.hall_id == hall_id)
-    
-    area_bosses = area_bosses.all()
-    
-    halls = ProductionHall.query.all()
-    
-    return render_template('queries/areas_and_bosses.html',
-                         areas=areas, area_bosses=area_bosses, halls=halls,
-                         selected_hall=hall_id)
-
-# 5. Получить перечень работ, которые проходит указанное изделие
-@main.route('/queries/item_work_types')
-def item_work_types():
-    item_id = request.args.get('item_id', type=int)
-    
-    work_types = []
-    if item_id:
-        work_types = db.session.query(ItemWorkType, WorkType, ProductionArea, WorkTeam).join(
-            WorkType, ItemWorkType.work_type_id == WorkType.id
-        ).join(
-            ProductionArea, WorkType.area_id == ProductionArea.id
-        ).join(
-            WorkTeam, WorkType.work_team_id == WorkTeam.id
-        ).filter(ItemWorkType.item_id == item_id).order_by(ItemWorkType.seq_number).all()
-    
-    items = Item.query.all()
-    
-    return render_template('queries/item_work_types.html',
-                         work_types=work_types, items=items, selected_item=item_id)
-
-# 6. Получить состав бригад указанного участка, цеха
-@main.route('/queries/teams_composition')
-def teams_composition():
-    hall_id = request.args.get('hall_id', type=int)
-    area_id = request.args.get('area_id', type=int)
-    
-    teams_query = db.session.query(WorkTeam, ProductionArea, ProductionHall).join(
-        ProductionArea, WorkTeam.area_id == ProductionArea.id
-    ).join(
-        ProductionHall, WorkTeam.hall_id == ProductionHall.id
-    )
-    
-    if hall_id:
-        teams_query = teams_query.filter(WorkTeam.hall_id == hall_id)
-    if area_id:
-        teams_query = teams_query.filter(WorkTeam.area_id == area_id)
-    
-    teams = teams_query.all()
-    
-    # Получаем состав бригад
-    team_members = {}
-    for team, area, hall in teams:
-        members = db.session.query(Worker, Employee).join(
-            Employee, Worker.employee_id == Employee.id
-        ).filter(Worker.work_team_id == team.id).all()
-        team_members[team.id] = members
-    
-    halls = ProductionHall.query.all()
-    areas = ProductionArea.query.all()
-    
-    return render_template('queries/teams_composition.html',
-                         teams=teams, team_members=team_members, halls=halls, areas=areas,
-                         selected_hall=hall_id, selected_area=area_id)
-
-# 7. Получить список мастеров указанного участка, цеха
-@main.route('/queries/masters')
-def masters():
-    hall_id = request.args.get('hall_id', type=int)
-    area_id = request.args.get('area_id', type=int)
-    
-    query = db.session.query(Masters, ProductionArea, Engineer, Employee, ProductionHall).join(
-        ProductionArea, Masters.area_id == ProductionArea.id
-    ).join(
-        Engineer, Masters.engineer_id == Engineer.employee_id
-    ).join(
-        Employee, Engineer.employee_id == Employee.id
-    ).join(
-        ProductionHall, ProductionArea.hall_id == ProductionHall.id
-    )
-    
-    if hall_id:
-        query = query.filter(ProductionArea.hall_id == hall_id)
-    if area_id:
-        query = query.filter(Masters.area_id == area_id)
-    
-    masters = query.all()
-    
-    halls = ProductionHall.query.all()
-    areas = ProductionArea.query.all()
-    
-    return render_template('queries/masters.html',
-                         masters=masters, halls=halls, areas=areas,
-                         selected_hall=hall_id, selected_area=area_id)
-
-# 8. Получить перечень изделий, собираемых в настоящий момент
-@main.route('/queries/current_items')
-def current_items():
-    hall_id = request.args.get('hall_id', type=int)
-    area_id = request.args.get('area_id', type=int)
-    category_id = request.args.get('category_id', type=int)
-    
-    query = db.session.query(Item, TypeItem, CategoryItem, ProductionHall).join(
-        TypeItem, Item.type_id == TypeItem.id
-    ).join(
-        CategoryItem, TypeItem.category_id == CategoryItem.id
-    ).join(
-        ProductionHall, Item.hall_id == ProductionHall.id
-    ).filter(Item.status == ItemStatusEnum.in_progress)
-    
-    if hall_id:
-        query = query.filter(Item.hall_id == hall_id)
-    if category_id:
-        query = query.filter(CategoryItem.id == category_id)
-    
-    # Если указан участок, получаем изделия через связь с участками
-    if area_id:
-        query = query.join(AreasItems, Item.id == AreasItems.item_id).filter(AreasItems.area_id == area_id)
-    
-    current_items = query.all()
-    
-    halls = ProductionHall.query.all()
-    areas = ProductionArea.query.all()
-    categories = CategoryItem.query.all()
-    
-    return render_template('queries/current_items.html',
-                         current_items=current_items, halls=halls, areas=areas, categories=categories,
-                         selected_hall=hall_id, selected_area=area_id, selected_category=category_id)
-
-# 9. Получить состав бригад, участвующих в сборке указанного изделия
-@main.route('/queries/item_teams')
-def item_teams():
-    item_id = request.args.get('item_id', type=int)
-    
-    teams = []
-    if item_id:
-        teams = db.session.query(WorkTeam, ProductionArea, WorkType).join(
-            WorkType, WorkTeam.id == WorkType.work_team_id
-        ).join(
-            ProductionArea, WorkTeam.area_id == ProductionArea.id
-        ).join(
-            ItemWorkType, WorkType.id == ItemWorkType.work_type_id
-        ).filter(ItemWorkType.item_id == item_id).distinct().all()
-    
-    items = Item.query.all()
-    
-    return render_template('queries/item_teams.html',
-                         teams=teams, items=items, selected_item=item_id)
-
-# 10. Получить перечень испытательных лабораторий для изделия
-@main.route('/queries/item_laboratories')
-def item_laboratories():
-    item_id = request.args.get('item_id', type=int)
-    
-    laboratories = []
-    if item_id:
-        laboratories = db.session.query(TestingLaboratory, ItemTests).join(
-            ItemTests, TestingLaboratory.id == ItemTests.lab_equip_id
-        ).join(
-            LabEquip, ItemTests.lab_equip_id == LabEquip.id
-        ).filter(ItemTests.item_id == item_id).distinct().all()
-    
-    items = Item.query.all()
-    
-    return render_template('queries/item_laboratories.html',
-                         laboratories=laboratories, items=items, selected_item=item_id)
-
-# 11. Получить перечень изделий, проходивших испытание в лаборатории за период
-@main.route('/queries/lab_tested_items')
-def lab_tested_items():
-    lab_id = request.args.get('lab_id', type=int)
-    category_id = request.args.get('category_id', type=int)
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
-    
-    query = db.session.query(Item, TypeItem, CategoryItem, ItemTests, TestingLaboratory).join(
-        TypeItem, Item.type_id == TypeItem.id
-    ).join(
-        CategoryItem, TypeItem.category_id == CategoryItem.id
-    ).join(
-        ItemTests, Item.id == ItemTests.item_id
-    ).join(
-        LabEquip, ItemTests.lab_equip_id == LabEquip.id
-    ).join(
-        TestingLaboratory, LabEquip.lab_id == TestingLaboratory.id
-    )
-    
-    if lab_id:
-        query = query.filter(TestingLaboratory.id == lab_id)
-    if category_id:
-        query = query.filter(CategoryItem.id == category_id)
-    if start_date:
-        query = query.filter(ItemTests.test_date >= start_date)
-    if end_date:
-        query = query.filter(ItemTests.test_date <= end_date)
-    
-    tested_items = query.all()
-    
-    laboratories = TestingLaboratory.query.all()
-    categories = CategoryItem.query.all()
-    
-    return render_template('queries/lab_tested_items.html',
-                         tested_items=tested_items, laboratories=laboratories, categories=categories,
-                         selected_lab=lab_id, selected_category=category_id,
-                         start_date=start_date, end_date=end_date)
-
-# 12. Получить список мастеров для изделий в лаборатории за период
-@main.route('/queries/lab_testers')
-def lab_testers():
-    lab_id = request.args.get('lab_id', type=int)
-    item_id = request.args.get('item_id', type=int)
-    category_id = request.args.get('category_id', type=int)
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
-    
-    query = db.session.query(LabWorker, Employee, TestingLaboratory, ItemTests, Item, TypeItem, CategoryItem).join(
-        Employee, LabWorker.employee_id == Employee.id
-    ).join(
-        TestingLaboratory, LabWorker.lab_id == TestingLaboratory.id
-    ).join(
-        ItemTests, LabWorker.employee_id == ItemTests.lab_worker_id
-    ).join(
-        Item, ItemTests.item_id == Item.id
-    ).join(
-        TypeItem, Item.type_id == TypeItem.id
-    ).join(
-        CategoryItem, TypeItem.category_id == CategoryItem.id
-    )
-    
-    if lab_id:
-        query = query.filter(LabWorker.lab_id == lab_id)
-    if item_id:
-        query = query.filter(ItemTests.item_id == item_id)
-    if category_id:
-        query = query.filter(CategoryItem.id == category_id)
-    if start_date:
-        query = query.filter(ItemTests.test_date >= start_date)
-    if end_date:
-        query = query.filter(ItemTests.test_date <= end_date)
-    
-    testers = query.distinct().all()
-    
-    laboratories = TestingLaboratory.query.all()
-    items = Item.query.all()
-    categories = CategoryItem.query.all()
-    
-    return render_template('queries/lab_testers.html',
-                         testers=testers, laboratories=laboratories, items=items, categories=categories,
-                         selected_lab=lab_id, selected_item=item_id, selected_category=category_id,
-                         start_date=start_date, end_date=end_date)
-
-# 13. Получить состав оборудования для испытаний за период
-@main.route('/queries/lab_equipment_usage')
-def lab_equipment_usage():
-    lab_id = request.args.get('lab_id', type=int)
-    item_id = request.args.get('item_id', type=int)
-    category_id = request.args.get('category_id', type=int)
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
-    
-    query = db.session.query(LabEquip, TestingLaboratory, ItemTests, Item, TypeItem, CategoryItem).join(
-        TestingLaboratory, LabEquip.lab_id == TestingLaboratory.id
-    ).join(
-        ItemTests, LabEquip.id == ItemTests.lab_equip_id
-    ).join(
-        Item, ItemTests.item_id == Item.id
-    ).join(
-        TypeItem, Item.type_id == TypeItem.id
-    ).join(
-        CategoryItem, TypeItem.category_id == CategoryItem.id
-    )
-    
-    if lab_id:
-        query = query.filter(LabEquip.lab_id == lab_id)
-    if item_id:
-        query = query.filter(ItemTests.item_id == item_id)
-    if category_id:
-        query = query.filter(CategoryItem.id == category_id)
-    if start_date:
-        query = query.filter(ItemTests.test_date >= start_date)
-    if end_date:
-        query = query.filter(ItemTests.test_date <= end_date)
-    
-    equipment_usage = query.distinct().all()
-    
-    laboratories = TestingLaboratory.query.all()
-    items = Item.query.all()
-    categories = CategoryItem.query.all()
-    
-    return render_template('queries/lab_equipment_usage.html',
-                         equipment_usage=equipment_usage, laboratories=laboratories, items=items, categories=categories,
-                         selected_lab=lab_id, selected_item=item_id, selected_category=category_id,
-                         start_date=start_date, end_date=end_date)
-
-# 14. Получить число и перечень изделий, собираемых в настоящее время (дублирует 8-й запрос)
-# Используем тот же маршрут current_items
+    return redirect(url_for('main.type_items'))
 
 # Маршруты для готовых изделий
 @main.route('/completed_items')
@@ -1196,3 +820,77 @@ def delete_equipment_usage(id):
     db.session.commit()
     flash('Запись об использовании оборудования удалена!', 'success')
     return redirect(url_for('main.equipment_usage'))
+
+# Маршруты для типов работ
+@main.route('/work_types')
+def work_types():
+    work_types = db.session.query(WorkType, ProductionArea, WorkTeam).join(
+        ProductionArea, WorkType.area_id == ProductionArea.id
+    ).join(
+        WorkTeam, WorkType.work_team_id == WorkTeam.id
+    ).all()
+    return render_template('work_types/list.html', work_types=work_types)
+
+@main.route('/work_types/add', methods=['GET', 'POST'])
+def add_work_type():
+    if request.method == 'POST':
+        work_name = request.form['work_name']
+        area_id = request.form['area_id']
+        work_team_id = request.form['work_team_id']
+        
+        work_type = WorkType(
+            work_name=work_name,
+            area_id=area_id,
+            work_team_id=work_team_id
+        )
+        
+        try:
+            db.session.add(work_type)
+            db.session.commit()
+            flash('Тип работы добавлен успешно!', 'success')
+            return redirect(url_for('main.work_types'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Ошибка при добавлении типа работы: {str(e)}', 'danger')
+    
+    areas = ProductionArea.query.all()
+    teams = WorkTeam.query.all()
+    return render_template('work_types/add.html', areas=areas, teams=teams)
+
+@main.route('/work_types/edit/<int:id>', methods=['GET', 'POST'])
+def edit_work_type(id):
+    work_type = WorkType.query.get_or_404(id)
+    
+    if request.method == 'POST':
+        work_type.work_name = request.form['work_name']
+        work_type.area_id = request.form['area_id']
+        work_type.work_team_id = request.form['work_team_id']
+        
+        try:
+            db.session.commit()
+            flash('Тип работы обновлен успешно!', 'success')
+            return redirect(url_for('main.work_types'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Ошибка при обновлении типа работы: {str(e)}', 'danger')
+    
+    areas = ProductionArea.query.all()
+    teams = WorkTeam.query.all()
+    return render_template('work_types/edit.html', work_type=work_type, areas=areas, teams=teams)
+
+@main.route('/work_types/delete/<int:id>', methods=['POST'])
+def delete_work_type(id):
+    work_type = WorkType.query.get_or_404(id)
+    
+    try:
+        db.session.delete(work_type)
+        db.session.commit()
+        flash('Тип работы удален успешно!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при удалении типа работы: {str(e)}', 'danger')
+    
+    return redirect(url_for('main.work_types'))
+
+# Отчеты
+# Дополнительные запросы из задания

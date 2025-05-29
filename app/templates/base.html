@@ -47,10 +47,13 @@
                             <i class="fas fa-cogs"></i> Изделия
                         </a>
                         <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('main.type_items') }}">Типы изделий</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.work_types') }}">Типы работ</a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{{ url_for('main.items') }}">Изделия</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('main.completed_items') }}">Готовые изделия</a></li>
                         </ul>
-                    </li>                    <li class="nav-item dropdown">
+                    </li><li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-flask"></i> Лаборатории
                         </a>
@@ -59,13 +62,7 @@
                             <li><a class="dropdown-item" href="{{ url_for('main.equipment') }}">Оборудование</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('main.tested_items') }}">Тестирование изделий</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('main.equipment_usage') }}">Использование оборудования</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.queries') }}">
-                            <i class="fas fa-search"></i> Запросы
-                        </a>
-                    </li>
+                        </ul>                    </li>
                 </ul>
             </div>
         </div>

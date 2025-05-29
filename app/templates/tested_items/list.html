@@ -1,155 +1,83 @@
 {% extends "base.html" %}
 
-{% block title %}Tested Items{% endblock %}
+{% block title %}Тестирование изделий{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <h1>Tested Items Management</h1>
-    
-    <div class="row mb-3">
-        <div class="col-12">
-            <a href="{{ url_for('main.add_tested_item') }}" class="btn btn-primary">
-                <i class="fa fa-plus"></i> Add New Test
-            </a>
-        </div>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-vial"></i> Тестирование изделий</h2>
+    <a href="{{ url_for('main.add_tested_item') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Добавить тест
+    </a>
+</div>
 
-    <div class="card">
-        <div class="card-header">
-            <h5 class="card-title">All Tested Items</h5>
-            <p class="text-muted">Manage testing results for completed items</p>
-        </div>
-        <div class="card-body">
-            {% if tested_items %}
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Test ID</th>
-                                <th>Completed Item</th>
-                                <th>Item Category</th>
-                                <th>Laboratory</th>
-                                <th>Test Start Date</th>
-                                <th>Test Completion</th>
-                                <th>Status</th>
-                                <th>Result</th>
-                                <th>Conducted By</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for test in tested_items %}
-                            <tr>
-                                <td>
-                                    <span class="badge bg-secondary">#{{ test.CompletedItemTest.id }}</span>
-                                </td>
-                                <td>
-                                    <strong>{{ test.CompletedItem.item_name }}</strong><br>
-                                    <small class="text-muted">Completed: {{ test.CompletedItem.completion_date.strftime('%Y-%m-%d') if test.CompletedItem.completion_date else 'N/A' }}</small>
-                                </td>
-                                <td>
-                                    <span class="badge bg-info">{{ test.Item.category if test.Item else 'N/A' }}</span>
-                                </td>
-                                <td>
-                                    <strong>{{ test.TestingLaboratory.name }}</strong><br>
-                                    <small class="text-muted">{{ test.TestingLaboratory.location }}</small>
-                                </td>
-                                <td>{{ test.CompletedItemTest.test_start_date.strftime('%Y-%m-%d') }}</td>
-                                <td>
-                                    {% if test.CompletedItemTest.test_completion_date %}
-                                        {{ test.CompletedItemTest.test_completion_date.strftime('%Y-%m-%d') }}
-                                    {% else %}
-                                        <span class="text-muted">In Progress</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if test.CompletedItemTest.test_status == 'passed' %}
-                                        <span class="badge bg-success">Passed</span>
-                                    {% elif test.CompletedItemTest.test_status == 'failed' %}
-                                        <span class="badge bg-danger">Failed</span>
-                                    {% else %}
-                                        <span class="badge bg-warning">In Progress</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if test.CompletedItemTest.test_result %}
-                                        <span class="text-truncate" style="max-width: 150px;" title="{{ test.CompletedItemTest.test_result }}">
-                                            {{ test.CompletedItemTest.test_result[:30] }}{% if test.CompletedItemTest.test_result|length > 30 %}...{% endif %}
-                                        </span>
-                                    {% else %}
-                                        <span class="text-muted">Pending</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <strong>{{ test.Employee.first_name }} {{ test.Employee.last_name }}</strong><br>
-                                    <small class="text-muted">{{ test.LabWorker.specialization if test.LabWorker else 'N/A' }}</small>
-                                </td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ url_for('main.edit_tested_item', id=test.CompletedItemTest.id) }}" 
-                                           class="btn btn-sm btn-outline-primary" title="Edit Test">
-                                            <i class="fa fa-edit"></i>
-                                        </a>
-                                        <a href="{{ url_for('main.delete_tested_item', id=test.CompletedItemTest.id) }}" 
-                                           class="btn btn-sm btn-outline-danger" 
-                                           onclick="return confirm('Are you sure you want to delete this test record?')"
-                                           title="Delete Test">
-                                            <i class="fa fa-trash"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- Summary Statistics -->
-                <div class="row mt-4">
-                    <div class="col-md-3">
-                        <div class="card bg-primary text-white">
-                            <div class="card-body">
-                                <h5>Total Tests</h5>
-                                <h3>{{ tested_items|length }}</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-success text-white">
-                            <div class="card-body">
-                                <h5>Passed</h5>
-                                <h3>{{ tested_items|selectattr('CompletedItemTest.test_status', 'equalto', 'passed')|list|length }}</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-danger text-white">
-                            <div class="card-body">
-                                <h5>Failed</h5>
-                                <h3>{{ tested_items|selectattr('CompletedItemTest.test_status', 'equalto', 'failed')|list|length }}</h3>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card bg-warning text-white">
-                            <div class="card-body">
-                                <h5>In Progress</h5>
-                                <h3>{{ tested_items|selectattr('CompletedItemTest.test_status', 'equalto', 'in_progress')|list|length }}</h3>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% else %}
-                <div class="text-center py-5">
-                    <i class="fa fa-vial fa-3x text-muted mb-3"></i>
-                    <h4>No Test Records</h4>
-                    <p class="text-muted">No tested items found. Start by adding a new test record.</p>
-                    <a href="{{ url_for('main.add_tested_item') }}" class="btn btn-primary">
-                        <i class="fa fa-plus"></i> Add First Test
-                    </a>
-                </div>
-            {% endif %}
-        </div>
+<div class="card">
+    <div class="card-body">
+            {% if tested_items %}            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Изделие</th>
+                            <th>Лаборатория</th>
+                            <th>Дата начала</th>
+                            <th>Дата завершения</th>
+                            <th>Статус</th>
+                            <th>Результат</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>                    <tbody>
+                        {% for completed_item_test, completed_item, item, type_item, laboratory, employee in tested_items %}
+                        <tr>
+                            <td>{{ completed_item_test.id }}</td>
+                            <td>{{ item.name }}</td>
+                            <td>{{ laboratory.name }}</td>
+                            <td>{{ completed_item_test.test_start_date.strftime('%Y-%m-%d') if completed_item_test.test_start_date else 'N/A' }}</td>
+                            <td>
+                                {% if completed_item_test.test_completion_date %}
+                                    {{ completed_item_test.test_completion_date.strftime('%Y-%m-%d') }}
+                                {% else %}
+                                    <span class="text-muted">В процессе</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if completed_item_test.test_status == 'passed' %}
+                                    <span class="badge bg-success">Пройден</span>
+                                {% elif completed_item_test.test_status == 'failed' %}
+                                    <span class="badge bg-danger">Провален</span>
+                                {% else %}
+                                    <span class="badge bg-warning">В процессе</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if completed_item_test.test_result %}
+                                    {{ completed_item_test.test_result[:50] }}{% if completed_item_test.test_result|length > 50 %}...{% endif %}
+                                {% else %}
+                                    <span class="text-muted">Ожидается</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('main.edit_tested_item', id=completed_item_test.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i> Редактировать
+                                </a>
+                                <a href="{{ url_for('main.delete_tested_item', id=completed_item_test.id) }}" class="btn btn-sm btn-outline-danger"
+                                   onclick="return confirm('Вы уверены, что хотите удалить запись о тестировании?')">
+                                    <i class="fas fa-trash"></i> Удалить
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}</tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-vial fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Тестируемые изделия не найдены</h5>
+                <p class="text-muted">Начните с добавления первого теста</p>
+                <a href="{{ url_for('main.add_tested_item') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Добавить тест
+                </a>
+            </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

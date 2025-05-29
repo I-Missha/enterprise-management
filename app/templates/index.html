@@ -73,6 +73,19 @@
             </div>
         </a>
     </div>
+    
+    <!-- Типы изделий -->
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ url_for('main.type_items') }}" class="text-decoration-none">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <i class="fas fa-cubes"></i>
+                    <h5 class="card-title">Типы изделий</h5>
+                    <p class="card-text">Управление типами производимых изделий</p>
+                </div>
+            </div>
+        </a>
+    </div>
 
     <!-- Готовые изделия -->
     <div class="col-md-6 col-lg-4">
@@ -120,8 +133,7 @@
             </div>
         </a>
     </div>
-    
-    <!-- Использование оборудования -->
+      <!-- Использование оборудования -->
     <div class="col-md-6 col-lg-4">
         <a href="{{ url_for('main.equipment_usage') }}" class="text-decoration-none">
             <div class="card dashboard-card h-100">
@@ -133,52 +145,30 @@
             </div>
         </a>
     </div>
-</div>
+      <!-- Типы изделий -->
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ url_for('main.type_items') }}" class="text-decoration-none">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <i class="fas fa-tags"></i>
+                    <h5 class="card-title">Типы изделий</h5>
+                    <p class="card-text">Управление типами производимых изделий</p>
+                </div>
+            </div>
+        </a>
+    </div>
 
-<div class="row mt-5">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-search"></i> Запросы и аналитика
-                </h5>
-            </div>
-            <div class="card-body">                <div class="row">
-                    <div class="col-md-4">
-                        <a href="{{ url_for('main.queries') }}" class="btn btn-outline-primary btn-lg w-100 mb-3">
-                            <i class="fas fa-database"></i> Производственные запросы
-                        </a>
-                    </div>
-                    <div class="col-md-4">
-                        <a href="{{ url_for('main.personnel_by_hall') }}" class="btn btn-outline-info btn-lg w-100 mb-3">
-                            <i class="fas fa-users"></i> Персонал по цехам
-                        </a>
-                    </div>
-                    <div class="col-md-4">
-                        <a href="{{ url_for('main.items_by_hall') }}" class="btn btn-outline-success btn-lg w-100 mb-3">
-                            <i class="fas fa-cogs"></i> Изделия по цехам
-                        </a>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4">
-                        <a href="{{ url_for('main.teams_composition') }}" class="btn btn-outline-warning btn-lg w-100 mb-3">
-                            <i class="fas fa-user-friends"></i> Состав бригад
-                        </a>
-                    </div>
-                    <div class="col-md-4">
-                        <a href="{{ url_for('main.current_items') }}" class="btn btn-outline-danger btn-lg w-100 mb-3">
-                            <i class="fas fa-clock"></i> Текущие изделия
-                        </a>
-                    </div>
-                    <div class="col-md-4">
-                        <a href="{{ url_for('main.lab_equipment_usage') }}" class="btn btn-outline-secondary btn-lg w-100 mb-3">
-                            <i class="fas fa-flask"></i> Использование оборудования
-                        </a>
-                    </div>
+    <!-- Типы работ -->
+    <div class="col-md-6 col-lg-4">
+        <a href="{{ url_for('main.work_types') }}" class="text-decoration-none">
+            <div class="card dashboard-card h-100">
+                <div class="card-body">
+                    <i class="fas fa-tools"></i>
+                    <h5 class="card-title">Типы работ</h5>
+                    <p class="card-text">Управление типами производственных работ</p>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 </div>
 {% endblock %}
