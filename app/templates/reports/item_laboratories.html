@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Лаборатории изделия{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2><i class="fas fa-flask"></i> Лаборатории изделия</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-12">
+                    <label for="item_id" class="form-label">Изделие</label>
+                    <select class="form-select" id="item_id" name="item_id" required>
+                        <option value="">Выберите изделие</option>
+                        {% for item in items %}
+                        <option value="{{ item.id }}" {% if selected_item_id == item.id %}selected{% endif %}>
+                            {{ item.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Найти
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if item %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Лаборатории, испытывающие изделие: <strong>{{ item.name }}</strong>
+    </div>
+    {% endif %}
+
+    {% if laboratories %}
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Найдено лабораторий: {{ laboratories|length }}</h5>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Лаборатория</th>
+                            <th>Описание</th>
+                            <th>Адрес</th>
+                            <th>Количество испытаний</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lab, test, completed_item, item in laboratories %}
+                        <tr>
+                            <td>{{ lab.name }}</td>
+                            <td>{{ lab.description or '-' }}</td>
+                            <td>{{ lab.address or '-' }}</td>
+                            <td>
+                                <span class="badge bg-primary">
+                                    {{ laboratories|selectattr('0.id', 'equalto', lab.id)|list|length }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% elif selected_item_id %}
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i> Лаборатории для выбранного изделия не найдены.
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Выберите изделие для просмотра лабораторий.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Работники по типу работ{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2><i class="fas fa-users-cog"></i> Работники по типу работ</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-6">
+                    <label for="work_type_id" class="form-label">Тип работ</label>
+                    <select class="form-select" id="work_type_id" name="work_type_id">
+                        <option value="">Все типы работ</option>
+                        {% for work_type in work_types %}
+                        <option value="{{ work_type.id }}" {% if selected_work_type_id == work_type.id %}selected{% endif %}>
+                            {{ work_type.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="hall_id" class="form-label">Цех</label>
+                    <select class="form-select" id="hall_id" name="hall_id">
+                        <option value="">Все цеха</option>
+                        {% for hall in halls %}
+                        <option value="{{ hall.id }}" {% if selected_hall_id == hall.id %}selected{% endif %}>
+                            {{ hall.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Найти
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if workers %}
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Найдено работников: {{ workers|length }}</h5>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ФИО</th>
+                            <th>Должность</th>
+                            <th>Цех</th>
+                            <th>Участок</th>
+                            <th>Тип работ</th>
+                            <th>Дата найма</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for worker, hall, area, work_type in workers %}
+                        <tr>
+                            <td>{{ worker.surname }} {{ worker.name }} {{ worker.patronymic }}</td>
+                            <td>{{ worker.position }}</td>
+                            <td>{{ hall.name }}</td>
+                            <td>{{ area.name }}</td>
+                            <td>{{ work_type.name }}</td>
+                            <td>{{ worker.hire_date.strftime('%d.%m.%Y') if worker.hire_date else '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Работники не найдены. Попробуйте изменить критерии поиска.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

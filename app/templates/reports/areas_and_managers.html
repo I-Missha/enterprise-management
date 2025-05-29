@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Участки и начальники{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2><i class="fas fa-sitemap"></i> Участки и начальники</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-6">
+                    <label for="hall_id" class="form-label">Цех</label>
+                    <select class="form-select" id="hall_id" name="hall_id">
+                        <option value="">Все цеха</option>
+                        {% for hall in halls %}
+                        <option value="{{ hall.id }}" {% if selected_hall_id == hall.id %}selected{% endif %}>
+                            {{ hall.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <div class="d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Найти
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if areas %}
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Найдено участков: {{ areas|length }}</h5>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Участок</th>
+                            <th>Цех</th>
+                            <th>Начальник</th>
+                            <th>Категория начальника</th>
+                            <th>Специальность</th>
+                            <th>Дата назначения</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for area, hall, engineer, employee in areas %}
+                        <tr>
+                            <td>{{ area.name }}</td>
+                            <td>{{ hall.name }}</td>
+                            <td>
+                                {% if employee %}
+                                {{ employee.surname }} {{ employee.name }} {{ employee.patronymic }}
+                                {% else %}
+                                <span class="text-muted">Начальник не назначен</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if engineer and engineer.category %}
+                                {{ engineer.category.name }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if engineer %}
+                                {{ engineer.specialty or '-' }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if employee %}
+                                {{ employee.hire_date.strftime('%d.%m.%Y') if employee.hire_date else '-' }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Участки не найдены. Попробуйте изменить критерии поиска.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

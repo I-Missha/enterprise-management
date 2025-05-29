@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Текущая сборка изделий{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2><i class="fas fa-cogs"></i> Текущая сборка изделий</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="hall_id" class="form-label">Цех</label>
+                    <select class="form-select" id="hall_id" name="hall_id">
+                        <option value="">Все цеха</option>
+                        {% for hall in halls %}
+                        <option value="{{ hall.id }}" {% if selected_hall_id == hall.id %}selected{% endif %}>
+                            {{ hall.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="area_id" class="form-label">Участок</label>
+                    <select class="form-select" id="area_id" name="area_id">
+                        <option value="">Все участки</option>
+                        {% for area in areas %}
+                        <option value="{{ area.id }}" {% if selected_area_id == area.id %}selected{% endif %}>
+                            {{ area.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="category_id" class="form-label">Категория</label>
+                    <select class="form-select" id="category_id" name="category_id">
+                        <option value="">Все категории</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if selected_category_id == category.id %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Найти
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if current_assembly %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <h3 class="text-primary">{{ current_assembly|length }}</h3>
+                        <p class="mb-0">Изделий в производстве</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <h3 class="text-success">{{ current_assembly|map(attribute='0.assembled_in_hall_id')|unique|list|length }}</h3>
+                        <p class="mb-0">Задействованных цехов</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <h3 class="text-info">{{ current_assembly|map(attribute='0.final_area_id')|unique|list|length }}</h3>
+                        <p class="mb-0">Задействованных участков</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-center">
+                        <h3 class="text-warning">{{ current_assembly|map(attribute='2.category_id')|unique|list|length }}</h3>
+                        <p class="mb-0">Категорий изделий</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Изделие</th>
+                            <th>Тип</th>
+                            <th>Категория</th>
+                            <th>Цех</th>
+                            <th>Участок</th>
+                            <th>Команда</th>
+                            <th>Дата начала</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for completed_item, item, type_item, category, hall, area, team in current_assembly %}
+                        <tr>
+                            <td>{{ item.name }}</td>
+                            <td>{{ type_item.name }}</td>
+                            <td>{{ category.name }}</td>
+                            <td>{{ hall.name }}</td>
+                            <td>{{ area.name }}</td>
+                            <td>{{ team.name }}</td>
+                            <td>{{ completed_item.production_start_date.strftime('%d.%m.%Y') if completed_item.production_start_date else '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Изделия в процессе сборки не найдены. Попробуйте изменить критерии поиска.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

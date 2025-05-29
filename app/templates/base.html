@@ -60,9 +60,13 @@
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{{ url_for('main.laboratories') }}">Лаборатории</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('main.equipment') }}">Оборудование</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('main.tested_items') }}">Тестирование изделий</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('main.equipment_usage') }}">Использование оборудования</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.tested_items') }}">Тестирование изделий</a></li>                            <li><a class="dropdown-item" href="{{ url_for('main.equipment_usage') }}">Использование оборудования</a></li>
                         </ul>                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.reports') }}">
+                            <i class="fas fa-chart-bar"></i> Запросы и отчеты
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>

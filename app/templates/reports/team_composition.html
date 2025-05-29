@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Состав бригад{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2><i class="fas fa-users"></i> Состав бригад</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="team_id" class="form-label">Бригада</label>
+                    <select class="form-select" id="team_id" name="team_id">
+                        <option value="">Все бригады</option>
+                        {% for team in teams %}
+                        <option value="{{ team.id }}" {% if selected_team_id == team.id %}selected{% endif %}>
+                            {{ team.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="hall_id" class="form-label">Цех</label>
+                    <select class="form-select" id="hall_id" name="hall_id">
+                        <option value="">Все цеха</option>
+                        {% for hall in halls %}
+                        <option value="{{ hall.id }}" {% if selected_hall_id == hall.id %}selected{% endif %}>
+                            {{ hall.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="area_id" class="form-label">Участок</label>
+                    <select class="form-select" id="area_id" name="area_id">
+                        <option value="">Все участки</option>
+                        {% for area in areas %}
+                        <option value="{{ area.id }}" {% if selected_area_id == area.id %}selected{% endif %}>
+                            {{ area.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Найти
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if team_members %}
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Найдено участников бригад: {{ team_members|length }}</h5>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Бригада</th>
+                            <th>Участник</th>
+                            <th>Должность</th>
+                            <th>Категория</th>
+                            <th>Разряд</th>
+                            <th>Цех</th>
+                            <th>Участок</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for team, worker, employee, hall, area in team_members %}
+                        <tr>
+                            <td>{{ team.name }}</td>
+                            <td>{{ employee.surname }} {{ employee.name }} {{ employee.patronymic }}</td>
+                            <td>{{ employee.position }}</td>
+                            <td>{{ worker.category.value if worker.category else '-' }}</td>
+                            <td>{{ worker.skill_level or '-' }}</td>
+                            <td>{{ hall.name }}</td>
+                            <td>{{ area.name }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Участники бригад не найдены. Попробуйте изменить критерии поиска.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

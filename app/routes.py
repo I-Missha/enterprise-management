@@ -894,3 +894,567 @@ def delete_work_type(id):
 
 # Отчеты
 # Дополнительные запросы из задания
+
+# Запросы и отчеты
+@main.route('/reports')
+def reports():
+    """Главная страница запросов и отчетов"""
+    return render_template('reports/index.html')
+
+# Все изделия
+@main.route('/reports/all_items')
+def all_items():
+    """Отчет по всем изделиям"""
+    category_id = request.args.get('category_id', type=int)
+    item_type_id = request.args.get('item_type_id', type=int)
+    
+    query = db.session.query(
+        Item, TypeItem, CategoryItem
+    ).join(
+        TypeItem, Item.type_id == TypeItem.id
+    ).join(
+        CategoryItem, TypeItem.category_id == CategoryItem.id
+    )
+    
+    if category_id:
+        query = query.filter(CategoryItem.id == category_id)
+    if item_type_id:
+        query = query.filter(TypeItem.id == item_type_id)
+    
+    items = query.all()
+    categories = CategoryItem.query.all()
+    item_types = TypeItem.query.all()
+    
+    return render_template('reports/all_items.html', 
+                         items=items, categories=categories, item_types=item_types,
+                         selected_category_id=category_id, selected_item_type_id=item_type_id)
+
+# 1. Получить перечень видов изделий отдельной категории и в целом, собираемых указанным цехом, предприятием
+@main.route('/reports/items_by_hall')
+def items_by_hall():
+    """Отчет по видам изделий по цехам"""
+    hall_id = request.args.get('hall_id', type=int)
+    category_id = request.args.get('category_id', type=int)
+    
+    query = db.session.query(
+        CompletedItem, Item, TypeItem, CategoryItem, ProductionHall, ProductionArea
+    ).join(
+        Item, CompletedItem.item_id == Item.id
+    ).join(
+        TypeItem, Item.type_id == TypeItem.id
+    ).join(
+        CategoryItem, TypeItem.category_id == CategoryItem.id
+    ).join(
+        ProductionHall, CompletedItem.assembled_in_hall_id == ProductionHall.id
+    ).join(
+        ProductionArea, CompletedItem.final_area_id == ProductionArea.id
+    )
+    
+    if hall_id:
+        query = query.filter(CompletedItem.assembled_in_hall_id == hall_id)
+    if category_id:
+        query = query.filter(CategoryItem.id == category_id)
+    
+    items = query.all()
+    halls = ProductionHall.query.all()
+    categories = CategoryItem.query.all()
+    
+    return render_template('reports/items_by_hall.html', 
+                         items=items, halls=halls, categories=categories,
+                         selected_hall_id=hall_id, selected_category_id=category_id)
+
+# 2. Получить число и перечень изделий отдельной категории и в целом, собранных указанным цехом, участком, предприятием в целом за определенный отрезок времени
+@main.route('/reports/completed_items_by_period')
+def completed_items_by_period():
+    """Отчет по завершенным изделиям за период"""
+    hall_id = request.args.get('hall_id', type=int)
+    area_id = request.args.get('area_id', type=int)
+    category_id = request.args.get('category_id', type=int)
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    
+    query = db.session.query(
+        CompletedItem, Item, TypeItem, CategoryItem, ProductionHall, ProductionArea
+    ).join(
+        Item, CompletedItem.item_id == Item.id
+    ).join(
+        TypeItem, Item.type_id == TypeItem.id
+    ).join(
+        CategoryItem, TypeItem.category_id == CategoryItem.id
+    ).join(
+        ProductionHall, CompletedItem.assembled_in_hall_id == ProductionHall.id
+    ).join(
+        ProductionArea, CompletedItem.final_area_id == ProductionArea.id
+    )
+    
+    if hall_id:
+        query = query.filter(CompletedItem.assembled_in_hall_id == hall_id)
+    if area_id:
+        query = query.filter(CompletedItem.final_area_id == area_id)
+    if category_id:
+        query = query.filter(CategoryItem.id == category_id)
+    if start_date:
+        query = query.filter(CompletedItem.production_completion_date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+    if end_date:
+        query = query.filter(CompletedItem.production_completion_date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+    
+    completed_items = query.all()
+    halls = ProductionHall.query.all()
+    areas = ProductionArea.query.all()
+    categories = CategoryItem.query.all()
+    
+    return render_template('reports/completed_items_by_period.html', 
+                         completed_items=completed_items, halls=halls, areas=areas, categories=categories,
+                         selected_hall_id=hall_id, selected_area_id=area_id, selected_category_id=category_id,
+                         start_date=start_date, end_date=end_date)
+
+# 3. Получить данные о кадровом составе цеха, предприятия в целом и по указанным категориям инженерно-технического персонала и рабочих
+@main.route('/reports/staff_composition')
+def staff_composition():
+    """Отчет по кадровому составу"""
+    hall_id = request.args.get('hall_id', type=int)
+    engineer_category_id = request.args.get('engineer_category_id', type=int)
+    worker_category = request.args.get('worker_category')
+    
+    # Инженеры
+    engineers_query = db.session.query(
+        Engineer, Employee, CategoryEngineer, ProductionHall
+    ).join(
+        Employee, Engineer.employee_id == Employee.id
+    ).join(
+        CategoryEngineer, Engineer.category_id == CategoryEngineer.id
+    ).join(
+        ProductionHall, Engineer.hall_id == ProductionHall.id
+    )
+    
+    if hall_id:
+        engineers_query = engineers_query.filter(Engineer.hall_id == hall_id)
+    if engineer_category_id:
+        engineers_query = engineers_query.filter(Engineer.category_id == engineer_category_id)
+
+    engineers = engineers_query.all()
+    
+    # Рабочие
+    workers_query = db.session.query(
+        Worker, Employee, ProductionHall, ProductionArea
+    ).join(
+        Employee, Worker.employee_id == Employee.id
+    ).join(
+        ProductionHall, Worker.hall_id == ProductionHall.id
+    ).outerjoin(
+        ProductionArea, Worker.area_id == ProductionArea.id
+    )
+    
+    if hall_id:
+        workers_query = workers_query.filter(Worker.hall_id == hall_id)
+    if worker_category:
+        workers_query = workers_query.filter(Worker.category == worker_category)
+    
+    workers = workers_query.all()
+    
+    halls = ProductionHall.query.all()
+    engineer_categories = CategoryEngineer.query.all()
+    worker_categories = list(WorkerCategoryEnum)
+    
+    return render_template('reports/staff_composition.html', 
+                         engineers=engineers, workers=workers, halls=halls, 
+                         engineer_categories=engineer_categories, worker_categories=worker_categories,
+                         selected_hall_id=hall_id, selected_engineer_category_id=engineer_category_id, 
+                         selected_worker_category=worker_category)
+
+# 4. Получить число и перечень участков указанного цеха, предприятия в целом и их начальников
+@main.route('/reports/areas_and_managers')
+def areas_and_managers():
+    """Отчет по участкам и начальникам"""
+    hall_id = request.args.get('hall_id', type=int)
+    
+    # Участки с начальниками (инженерами)
+    query = db.session.query(
+        ProductionArea, ProductionHall, Engineer, Employee
+    ).join(
+        ProductionHall, ProductionArea.hall_id == ProductionHall.id
+    ).outerjoin(
+        Engineer, and_(Engineer.area_id == ProductionArea.id, Engineer.category_id == 1)  # Assuming category 1 is manager
+    ).outerjoin(
+        Employee, Engineer.employee_id == Employee.id
+    )
+    
+    if hall_id:
+        query = query.filter(ProductionArea.hall_id == hall_id)
+    
+    areas = query.all()
+    halls = ProductionHall.query.all()
+    
+    return render_template('reports/areas_and_managers.html', 
+                         areas=areas, halls=halls, selected_hall_id=hall_id)
+
+# 5. Получить перечень работ, которые проходит указанное изделие
+@main.route('/reports/item_work_types')
+def item_work_types():
+    """Отчет по типам работ для изделия"""
+    item_id = request.args.get('item_id', type=int)
+    
+    if item_id:
+        # Получаем типы работ через готовые изделия
+        work_types = db.session.query(
+            WorkType, ProductionArea, WorkTeam, CompletedItem, Item
+        ).join(
+            ProductionArea, WorkType.area_id == ProductionArea.id
+        ).join(
+            WorkTeam, WorkType.work_team_id == WorkTeam.id
+        ).join(
+            CompletedItem, CompletedItem.final_area_id == ProductionArea.id
+        ).join(
+            Item, CompletedItem.item_id == Item.id
+        ).filter(Item.id == item_id).all()
+        
+        item = Item.query.get(item_id)
+    else:
+        work_types = []
+        item = None
+    
+    items = Item.query.all()
+    
+    return render_template('reports/item_work_types.html', 
+                         work_types=work_types, items=items, item=item, selected_item_id=item_id)
+
+# 6. Получить состав бригад указанного участка, цеха
+@main.route('/reports/team_composition')
+def team_composition():
+    """Отчет по составу бригад"""
+    area_id = request.args.get('area_id', type=int)
+    hall_id = request.args.get('hall_id', type=int)
+    
+    # Бригады с рабочими
+    query = db.session.query(
+        WorkTeam, ProductionArea, ProductionHall, Worker, Employee
+    ).join(
+        ProductionArea, WorkTeam.area_id == ProductionArea.id
+    ).join(
+        ProductionHall, WorkTeam.hall_id == ProductionHall.id
+    ).outerjoin(
+        Worker, Worker.work_team_id == WorkTeam.id
+    ).outerjoin(
+        Employee, Worker.employee_id == Employee.id
+    )
+    
+    if area_id:
+        query = query.filter(WorkTeam.area_id == area_id)
+    if hall_id:
+        query = query.filter(WorkTeam.hall_id == hall_id)
+    
+    teams_data = query.all()
+    areas = ProductionArea.query.all()
+    halls = ProductionHall.query.all()
+    
+    return render_template('reports/team_composition.html', 
+                         teams_data=teams_data, areas=areas, halls=halls,
+                         selected_area_id=area_id, selected_hall_id=hall_id)
+
+# 7. Получить список мастеров указанного участка, цеха
+@main.route('/reports/masters')
+def masters():
+    """Отчет по мастерам"""
+    area_id = request.args.get('area_id', type=int)
+    hall_id = request.args.get('hall_id', type=int)
+      # Мастера (все инженеры, так как в системе нет специальной категории для мастеров)
+    query = db.session.query(
+        Engineer, Employee, CategoryEngineer, ProductionArea, ProductionHall
+    ).join(
+        Employee, Engineer.employee_id == Employee.id
+    ).join(
+        CategoryEngineer, Engineer.category_id == CategoryEngineer.id
+    ).join(
+        ProductionArea, Engineer.area_id == ProductionArea.id
+    ).join(
+        ProductionHall, Engineer.hall_id == ProductionHall.id
+    )
+    
+    if area_id:
+        query = query.filter(Engineer.area_id == area_id)
+    if hall_id:
+        query = query.filter(Engineer.hall_id == hall_id)
+    
+    masters = query.all()
+    areas = ProductionArea.query.all()
+    halls = ProductionHall.query.all()
+    
+    return render_template('reports/masters.html', 
+                         masters=masters, areas=areas, halls=halls,
+                         selected_area_id=area_id, selected_hall_id=hall_id)
+
+# 8. Получить перечень изделий отдельной категории и в целом, собираемых в настоящий момент указанным участком, цехом, предприятием
+@main.route('/reports/current_production')
+def current_production():
+    """Отчет по текущему производству"""
+    area_id = request.args.get('area_id', type=int)
+    hall_id = request.args.get('hall_id', type=int)
+    category_id = request.args.get('category_id', type=int)
+    
+    # Изделия в процессе производства
+    query = db.session.query(
+        CompletedItem, Item, TypeItem, CategoryItem, ProductionHall, ProductionArea
+    ).join(
+        Item, CompletedItem.item_id == Item.id
+    ).join(
+        TypeItem, Item.type_id == TypeItem.id
+    ).join(
+        CategoryItem, TypeItem.category_id == CategoryItem.id
+    ).join(
+        ProductionHall, CompletedItem.assembled_in_hall_id == ProductionHall.id
+    ).join(
+        ProductionArea, CompletedItem.final_area_id == ProductionArea.id
+    ).filter(
+        CompletedItem.production_completion_date.is_(None)  # В процессе производства
+    )
+    
+    if area_id:
+        query = query.filter(CompletedItem.final_area_id == area_id)
+    if hall_id:
+        query = query.filter(CompletedItem.assembled_in_hall_id == hall_id)
+    if category_id:
+        query = query.filter(CategoryItem.id == category_id)
+    
+    current_items = query.all()
+    areas = ProductionArea.query.all()
+    halls = ProductionHall.query.all()
+    categories = CategoryItem.query.all()
+    
+    return render_template('reports/current_production.html', 
+                         current_items=current_items, areas=areas, halls=halls, categories=categories,
+                         selected_area_id=area_id, selected_hall_id=hall_id, selected_category_id=category_id)
+
+# 9. Получить состав бригад, участвующих в сборке указанного изделия
+@main.route('/reports/item_teams')
+def item_teams():
+    """Отчет по бригадам, участвующим в сборке изделия"""
+    item_id = request.args.get('item_id', type=int)
+    
+    if item_id:
+        teams = db.session.query(
+            WorkTeam, ProductionArea, ProductionHall, CompletedItem, Item
+        ).join(
+            ProductionArea, WorkTeam.area_id == ProductionArea.id
+        ).join(
+            ProductionHall, WorkTeam.hall_id == ProductionHall.id
+        ).join(
+            CompletedItem, CompletedItem.assembled_by_team_id == WorkTeam.id
+        ).join(
+            Item, CompletedItem.item_id == Item.id
+        ).filter(Item.id == item_id).all()
+        
+        item = Item.query.get(item_id)
+    else:
+        teams = []
+        item = None
+    
+    items = Item.query.all()
+    
+    return render_template('reports/item_teams.html', 
+                         teams=teams, items=items, item=item, selected_item_id=item_id)
+
+# 10. Получить перечень испытательных лабораторий, участвующих в испытаниях некоторого конкретного изделия
+@main.route('/reports/item_laboratories')
+def item_laboratories():
+    """Отчет по лабораториям, испытывающим изделие"""
+    item_id = request.args.get('item_id', type=int)
+    
+    if item_id:
+        laboratories = db.session.query(
+            TestingLaboratory, CompletedItemTest, CompletedItem, Item
+        ).join(
+            CompletedItemTest, TestingLaboratory.id == CompletedItemTest.lab_id
+        ).join(
+            CompletedItem, CompletedItemTest.completed_item_id == CompletedItem.id
+        ).join(
+            Item, CompletedItem.item_id == Item.id
+        ).filter(Item.id == item_id).distinct().all()
+        
+        item = Item.query.get(item_id)
+    else:
+        laboratories = []
+        item = None
+    
+    items = Item.query.all()
+    
+    return render_template('reports/item_laboratories.html', 
+                         laboratories=laboratories, items=items, item=item, selected_item_id=item_id)
+
+# 11. Получить перечень изделий отдельной категории и в целом, проходивших испытание в указанной лаборатории за определенный период
+@main.route('/reports/tested_items_by_lab')
+def tested_items_by_lab():
+    """Отчет по изделиям, испытанным в лаборатории за период"""
+    lab_id = request.args.get('lab_id', type=int)
+    category_id = request.args.get('category_id', type=int)
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    
+    query = db.session.query(
+        CompletedItemTest, CompletedItem, Item, TypeItem, CategoryItem, TestingLaboratory
+    ).join(
+        CompletedItem, CompletedItemTest.completed_item_id == CompletedItem.id
+    ).join(
+        Item, CompletedItem.item_id == Item.id
+    ).join(
+        TypeItem, Item.type_id == TypeItem.id
+    ).join(
+        CategoryItem, TypeItem.category_id == CategoryItem.id
+    ).join(
+        TestingLaboratory, CompletedItemTest.lab_id == TestingLaboratory.id
+    )
+    
+    if lab_id:
+        query = query.filter(CompletedItemTest.lab_id == lab_id)
+    if category_id:
+        query = query.filter(CategoryItem.id == category_id)
+    if start_date:
+        query = query.filter(CompletedItemTest.test_start_date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+    if end_date:
+        query = query.filter(CompletedItemTest.test_start_date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+    
+    tested_items = query.all()
+    laboratories = TestingLaboratory.query.all()
+    categories = CategoryItem.query.all()
+    
+    return render_template('reports/tested_items_by_lab.html', 
+                         tested_items=tested_items, laboratories=laboratories, categories=categories,
+                         selected_lab_id=lab_id, selected_category_id=category_id,
+                         start_date=start_date, end_date=end_date)
+
+# 12. Получить список испытателей, участвующих в испытаниях указанного изделия, изделий отдельной категории и в целом в некоторой лаборатории за определенный период
+@main.route('/reports/testers')
+def testers():
+    """Отчет по испытателям"""
+    item_id = request.args.get('item_id', type=int)
+    category_id = request.args.get('category_id', type=int)
+    lab_id = request.args.get('lab_id', type=int)
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    
+    query = db.session.query(
+        Employee, CompletedItemTest, CompletedItem, Item, TypeItem, CategoryItem, TestingLaboratory
+    ).join(
+        CompletedItemTest, Employee.id == CompletedItemTest.conducted_by_worker_id
+    ).join(
+        CompletedItem, CompletedItemTest.completed_item_id == CompletedItem.id
+    ).join(
+        Item, CompletedItem.item_id == Item.id
+    ).join(
+        TypeItem, Item.type_id == TypeItem.id
+    ).join(
+        CategoryItem, TypeItem.category_id == CategoryItem.id
+    ).join(
+        TestingLaboratory, CompletedItemTest.lab_id == TestingLaboratory.id
+    )
+    
+    if item_id:
+        query = query.filter(Item.id == item_id)
+    if category_id:
+        query = query.filter(CategoryItem.id == category_id)
+    if lab_id:
+        query = query.filter(CompletedItemTest.lab_id == lab_id)
+    if start_date:
+        query = query.filter(CompletedItemTest.test_start_date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+    if end_date:
+        query = query.filter(CompletedItemTest.test_start_date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+    
+    testers = query.distinct().all()
+    items = Item.query.all()
+    categories = CategoryItem.query.all()
+    laboratories = TestingLaboratory.query.all()
+    
+    return render_template('reports/testers.html', 
+                         testers=testers, items=items, categories=categories, laboratories=laboratories,
+                         selected_item_id=item_id, selected_category_id=category_id, selected_lab_id=lab_id,
+                         start_date=start_date, end_date=end_date)
+
+# 13. Получить состав оборудования, использовавшегося при испытании указанного изделия, изделий отдельной категории и в целом в некоторой лаборатории за определенный период
+@main.route('/reports/equipment_usage_report')
+def equipment_usage_report():
+    """Отчет по использованию оборудования"""
+    item_id = request.args.get('item_id', type=int)
+    category_id = request.args.get('category_id', type=int)
+    lab_id = request.args.get('lab_id', type=int)
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    
+    query = db.session.query(
+        LabEquip, TestEquipmentUsage, CompletedItemTest, CompletedItem, Item, TypeItem, CategoryItem, TestingLaboratory
+    ).join(
+        TestEquipmentUsage, LabEquip.id == TestEquipmentUsage.lab_equip_id
+    ).join(
+        CompletedItemTest, TestEquipmentUsage.completed_item_test_id == CompletedItemTest.id
+    ).join(
+        CompletedItem, CompletedItemTest.completed_item_id == CompletedItem.id
+    ).join(
+        Item, CompletedItem.item_id == Item.id
+    ).join(
+        TypeItem, Item.type_id == TypeItem.id
+    ).join(
+        CategoryItem, TypeItem.category_id == CategoryItem.id
+    ).join(
+        TestingLaboratory, LabEquip.lab_id == TestingLaboratory.id
+    )
+    
+    if item_id:
+        query = query.filter(Item.id == item_id)
+    if category_id:
+        query = query.filter(CategoryItem.id == category_id)
+    if lab_id:
+        query = query.filter(LabEquip.lab_id == lab_id)
+    if start_date:
+        query = query.filter(TestEquipmentUsage.usage_date >= datetime.strptime(start_date, '%Y-%m-%d').date())
+    if end_date:
+        query = query.filter(TestEquipmentUsage.usage_date <= datetime.strptime(end_date, '%Y-%m-%d').date())
+    
+    equipment_usage = query.all()
+    items = Item.query.all()
+    categories = CategoryItem.query.all()
+    laboratories = TestingLaboratory.query.all()
+    
+    return render_template('reports/equipment_usage_report.html', 
+                         equipment_usage=equipment_usage, items=items, categories=categories, laboratories=laboratories,
+                         selected_item_id=item_id, selected_category_id=category_id, selected_lab_id=lab_id,
+                         start_date=start_date, end_date=end_date)
+
+# 14. Получить число и перечень изделий отдельной категории и в целом, собираемых указанным цехом, участком, предприятием в целом в настоящее время
+@main.route('/reports/current_assembly')
+def current_assembly():
+    """Отчет по текущей сборке изделий"""
+    hall_id = request.args.get('hall_id', type=int)
+    area_id = request.args.get('area_id', type=int)
+    category_id = request.args.get('category_id', type=int)
+    
+    query = db.session.query(
+        CompletedItem, Item, TypeItem, CategoryItem, ProductionHall, ProductionArea, WorkTeam
+    ).join(
+        Item, CompletedItem.item_id == Item.id
+    ).join(
+        TypeItem, Item.type_id == TypeItem.id
+    ).join(
+        CategoryItem, TypeItem.category_id == CategoryItem.id
+    ).join(
+        ProductionHall, CompletedItem.assembled_in_hall_id == ProductionHall.id
+    ).join(
+        ProductionArea, CompletedItem.final_area_id == ProductionArea.id
+    ).join(
+        WorkTeam, CompletedItem.assembled_by_team_id == WorkTeam.id
+    ).filter(
+        CompletedItem.production_completion_date.is_(None)  # В процессе сборки
+    )
+    
+    if hall_id:
+        query = query.filter(CompletedItem.assembled_in_hall_id == hall_id)
+    if area_id:
+        query = query.filter(CompletedItem.final_area_id == area_id)
+    if category_id:
+        query = query.filter(CategoryItem.id == category_id)
+    
+    current_assembly = query.all()
+    halls = ProductionHall.query.all()
+    areas = ProductionArea.query.all()
+    categories = CategoryItem.query.all()
+    
+    return render_template('reports/current_assembly.html', 
+                         current_assembly=current_assembly, halls=halls, areas=areas, categories=categories,
+                         selected_hall_id=hall_id, selected_area_id=area_id, selected_category_id=category_id)

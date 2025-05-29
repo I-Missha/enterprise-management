@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Оборудование по лабораториям{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2><i class="fas fa-microscope"></i> Оборудование по лабораториям</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-6">
+                    <label for="lab_id" class="form-label">Лаборатория</label>
+                    <select class="form-select" id="lab_id" name="lab_id">
+                        <option value="">Все лаборатории</option>
+                        {% for lab in laboratories %}
+                        <option value="{{ lab.id }}" {% if selected_lab_id == lab.id %}selected{% endif %}>
+                            {{ lab.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="equipment_type" class="form-label">Тип оборудования</label>
+                    <input type="text" class="form-control" id="equipment_type" name="equipment_type" value="{{ equipment_type or '' }}" placeholder="Введите тип оборудования">
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Найти
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if equipment %}
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Найдено оборудования: {{ equipment|length }}</h5>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Тип</th>
+                            <th>Лаборатория</th>
+                            <th>Модель</th>
+                            <th>Дата установки</th>
+                            <th>Состояние</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for equip, lab in equipment %}
+                        <tr>
+                            <td>{{ equip.name }}</td>
+                            <td>{{ equip.equipment_type or '-' }}</td>
+                            <td>{{ lab.name }}</td>
+                            <td>{{ equip.model or '-' }}</td>
+                            <td>{{ equip.installation_date.strftime('%d.%m.%Y') if equip.installation_date else '-' }}</td>
+                            <td>
+                                {% if equip.status %}
+                                <span class="badge bg-success">{{ equip.status }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Неизвестно</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Оборудование не найдено. Попробуйте изменить критерии поиска.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

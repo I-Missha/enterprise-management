@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Мастера по участкам{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2><i class="fas fa-user-tie"></i> Мастера по участкам</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">                <div class="col-md-6">
+                    <label for="hall_id" class="form-label">Цех</label>
+                    <select class="form-select" id="hall_id" name="hall_id">
+                        <option value="">Все цеха</option>
+                        {% for hall in halls %}
+                        <option value="{{ hall.id }}" {% if selected_hall_id == hall.id %}selected{% endif %}>
+                            {{ hall.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div><div class="col-md-6">
+                    <label for="area_id" class="form-label">Участок</label>
+                    <select class="form-select" id="area_id" name="area_id">
+                        <option value="">Все участки</option>
+                        {% for area in areas %}
+                        <option value="{{ area.id }}" {% if selected_area_id == area.id %}selected{% endif %}>
+                            {{ area.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Найти
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if masters %}
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Найдено мастеров: {{ masters|length }}</h5>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ФИО</th>
+                            <th>Категория</th>
+                            <th>Специальность</th>
+                            <th>Участок</th>
+                            <th>Цех</th>
+                            <th>Дата найма</th>
+                            <th>Зарплата</th>
+                        </tr>
+                    </thead>                    <tbody>
+                        {% for engineer, employee, category, area, hall in masters %}
+                        <tr>
+                            <td>{{ employee.surname }} {{ employee.name }} {{ employee.patronymic }}</td>
+                            <td>
+                                {% if category.name.value == 'engineer' %}Инженер
+                                {% elif category.name.value == 'technologist' %}Технолог
+                                {% elif category.name.value == 'technician' %}Техник
+                                {% else %}{{ category.attribute or category.name.value }}
+                                {% endif %}
+                            </td>
+                            <td>{{ employee.current_position or '-' }}</td>
+                            <td>{{ area.name }}</td>
+                            <td>{{ hall.name }}</td>
+                            <td>{{ employee.hire_date.strftime('%d.%m.%Y') if employee.hire_date else '-' }}</td>
+                            <td>{{ employee.salary or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Мастера не найдены. Попробуйте изменить критерии поиска.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

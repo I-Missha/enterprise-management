@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Состав персонала{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2><i class="fas fa-users"></i> Состав персонала</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="hall_id" class="form-label">Цех</label>
+                    <select class="form-select" id="hall_id" name="hall_id">
+                        <option value="">Все цеха</option>
+                        {% for hall in halls %}
+                        <option value="{{ hall.id }}" {% if selected_hall_id == hall.id %}selected{% endif %}>
+                            {{ hall.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="engineer_category_id" class="form-label">Категория инженеров</label>
+                    <select class="form-select" id="engineer_category_id" name="engineer_category_id">
+                        <option value="">Все категории</option>
+                        {% for category in engineer_categories %}
+                        <option value="{{ category.id }}" {% if selected_engineer_category_id == category.id %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="worker_category" class="form-label">Категория рабочих</label>
+                    <select class="form-select" id="worker_category" name="worker_category">
+                        <option value="">Все категории</option>
+                        {% for category in worker_categories %}
+                        <option value="{{ category.value }}" {% if selected_worker_category == category.value %}selected{% endif %}>
+                            {{ category.value }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Найти
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Инженеры -->
+    {% if engineers %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-user-tie"></i> Инженеры ({{ engineers|length }})</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ФИО</th>
+                            <th>Категория</th>
+                            <th>Специальность</th>
+                            <th>Цех</th>
+                            <th>Дата найма</th>
+                            <th>Зарплата</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for engineer, employee, hall, category in engineers %}
+                        <tr>
+                            <td>{{ employee.surname }} {{ employee.name }} {{ employee.patronymic }}</td>
+                            <td>{{ category.name }}</td>
+                            <td>{{ engineer.specialty or '-' }}</td>
+                            <td>{{ hall.name }}</td>
+                            <td>{{ employee.hire_date.strftime('%d.%m.%Y') if employee.hire_date else '-' }}</td>
+                            <td>{{ employee.salary or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Рабочие -->
+    {% if workers %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-hard-hat"></i> Рабочие ({{ workers|length }})</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ФИО</th>
+                            <th>Категория</th>
+                            <th>Разряд</th>
+                            <th>Цех</th>
+                            <th>Участок</th>
+                            <th>Дата найма</th>
+                            <th>Зарплата</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for worker, employee, hall, area in workers %}
+                        <tr>
+                            <td>{{ employee.surname }} {{ employee.name }} {{ employee.patronymic }}</td>
+                            <td>{{ worker.category.value if worker.category else '-' }}</td>
+                            <td>{{ worker.skill_level or '-' }}</td>
+                            <td>{{ hall.name }}</td>
+                            <td>{{ area.name }}</td>
+                            <td>{{ employee.hire_date.strftime('%d.%m.%Y') if employee.hire_date else '-' }}</td>
+                            <td>{{ employee.salary or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not engineers and not workers %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Персонал не найден. Попробуйте изменить критерии поиска.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Все изделия{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2><i class="fas fa-list"></i> Все изделия</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-4">
+                    <label for="category_id" class="form-label">Категория</label>
+                    <select class="form-select" id="category_id" name="category_id">
+                        <option value="">Все категории</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if selected_category_id == category.id %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="type_id" class="form-label">Тип изделия</label>
+                    <select class="form-select" id="type_id" name="type_id">
+                        <option value="">Все типы</option>
+                        {% for type_item in types %}
+                        <option value="{{ type_item.id }}" {% if selected_type_id == type_item.id %}selected{% endif %}>
+                            {{ type_item.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="search" class="form-label">Поиск по названию</label>
+                    <input type="text" class="form-control" id="search" name="search" value="{{ search_query or '' }}" placeholder="Введите название">
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Найти
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if items %}
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Найдено изделий: {{ items|length }}</h5>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Тип</th>
+                            <th>Категория</th>
+                            <th>Описание</th>
+                            <th>Цена</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item, type_item, category in items %}
+                        <tr>
+                            <td>{{ item.name }}</td>
+                            <td>{{ type_item.name }}</td>
+                            <td>{{ category.name }}</td>
+                            <td>{{ item.description or '-' }}</td>
+                            <td>{{ item.price or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Изделия не найдены. Попробуйте изменить критерии поиска.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

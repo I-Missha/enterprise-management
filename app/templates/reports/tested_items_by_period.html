@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Испытанные изделия по периоду{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2><i class="fas fa-vial"></i> Испытанные изделия по периоду</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <div class="col-md-3">
+                    <label for="start_date" class="form-label">Дата начала</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date or '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="end_date" class="form-label">Дата окончания</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date or '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="category_id" class="form-label">Категория</label>
+                    <select class="form-select" id="category_id" name="category_id">
+                        <option value="">Все категории</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if selected_category_id == category.id %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="lab_id" class="form-label">Лаборатория</label>
+                    <select class="form-select" id="lab_id" name="lab_id">
+                        <option value="">Все лаборатории</option>
+                        {% for lab in laboratories %}
+                        <option value="{{ lab.id }}" {% if selected_lab_id == lab.id %}selected{% endif %}>
+                            {{ lab.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Найти
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if tested_items %}
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Найдено испытаний: {{ tested_items|length }}</h5>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Изделие</th>
+                            <th>Тип</th>
+                            <th>Категория</th>
+                            <th>Лаборатория</th>
+                            <th>Дата начала</th>
+                            <th>Дата окончания</th>
+                            <th>Результат</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for test, completed_item, item, type_item, category, lab in tested_items %}
+                        <tr>
+                            <td>{{ item.name }}</td>
+                            <td>{{ type_item.name }}</td>
+                            <td>{{ category.name }}</td>
+                            <td>{{ lab.name }}</td>
+                            <td>{{ test.test_start_date.strftime('%d.%m.%Y') if test.test_start_date else '-' }}</td>
+                            <td>{{ test.test_end_date.strftime('%d.%m.%Y') if test.test_end_date else '-' }}</td>
+                            <td>
+                                {% if test.test_result %}
+                                <span class="badge bg-success">{{ test.test_result }}</span>
+                                {% else %}
+                                <span class="badge bg-warning">В процессе</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Испытанные изделия не найдены. Попробуйте изменить критерии поиска.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Запросы и отчеты{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2>Запросы и отчеты</h2>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Отчеты по изделиям</h5>
+                </div>
+                <div class="card-body">                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a href="{{ url_for('main.items_by_hall') }}" class="btn btn-link text-start p-0">
+                                1. Перечень видов изделий по цехам
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{{ url_for('main.completed_items_by_period') }}" class="btn btn-link text-start p-0">
+                                2. Число и перечень собранных изделий за период
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{{ url_for('main.item_work_types') }}" class="btn btn-link text-start p-0">
+                                5. Перечень работ для изделия
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{{ url_for('main.current_production') }}" class="btn btn-link text-start p-0">
+                                8. Изделия, собираемые в настоящий момент
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{{ url_for('main.item_teams') }}" class="btn btn-link text-start p-0">
+                                9. Состав бригад, участвующих в сборке изделия
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{{ url_for('main.current_assembly') }}" class="btn btn-link text-start p-0">
+                                14. Число и перечень изделий в текущей сборке
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Отчеты по персоналу</h5>
+                </div>
+                <div class="card-body">                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a href="{{ url_for('main.staff_composition') }}" class="btn btn-link text-start p-0">
+                                3. Данные о кадровом составе
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{{ url_for('main.areas_and_managers') }}" class="btn btn-link text-start p-0">
+                                4. Число и перечень участков и их начальников
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{{ url_for('main.team_composition') }}" class="btn btn-link text-start p-0">
+                                6. Состав бригад указанного участка, цеха
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{{ url_for('main.masters') }}" class="btn btn-link text-start p-0">
+                                7. Список мастеров указанного участка, цеха
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Отчеты по испытаниям</h5>
+                </div>
+                <div class="card-body">                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a href="{{ url_for('main.item_laboratories') }}" class="btn btn-link text-start p-0">
+                                10. Перечень испытательных лабораторий по изделию
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{{ url_for('main.tested_items_by_lab') }}" class="btn btn-link text-start p-0">
+                                11. Перечень изделий, испытанных в лаборатории
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{{ url_for('main.testers') }}" class="btn btn-link text-start p-0">
+                                12. Список испытателей
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="{{ url_for('main.equipment_usage_report') }}" class="btn btn-link text-start p-0">
+                                13. Состав оборудования при испытаниях
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
